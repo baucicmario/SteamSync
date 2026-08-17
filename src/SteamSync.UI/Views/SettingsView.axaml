@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SteamSync.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SteamSync.UI.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="20">
+      
+      <TextBlock Text="Settings" FontSize="24" FontWeight="Bold"/>
+
+      <!-- API Keys -->
+      <Border Background="#2d2d30" Padding="20" CornerRadius="5">
+        <StackPanel Spacing="10">
+          <TextBlock Text="API Integration" FontWeight="Bold" FontSize="16"/>
+          <TextBlock Text="SteamGridDB API Key (Required for artwork):" Foreground="#cccccc"/>
+          <TextBox Text="{Binding SteamGridDbApiKey}" PasswordChar="*" PlaceholderText="Paste Bearer token here..."/>
+        </StackPanel>
+      </Border>
+
+      <!-- Launchers -->
+      <Border Background="#2d2d30" Padding="20" CornerRadius="5">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Auto-Detection" FontWeight="Bold" FontSize="16"/>
+          <CheckBox IsChecked="{Binding DetectEpic}" Content="Epic Games Store"/>
+          <CheckBox IsChecked="{Binding DetectGog}" Content="GOG Galaxy"/>
+          <CheckBox IsChecked="{Binding DetectUbisoft}" Content="Ubisoft Connect"/>
+          <CheckBox IsChecked="{Binding DetectEa}" Content="EA App"/>
+          <CheckBox IsChecked="{Binding DetectBattleNet}" Content="Battle.net"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Custom Directories -->
+      <Border Background="#2d2d30" Padding="20" CornerRadius="5">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Custom Scan Directories (DRM-Free / Standalone)" FontWeight="Bold" FontSize="16"/>
+          
+          <ListBox ItemsSource="{Binding CustomScanDirectories}" Height="150" Background="#1e1e1e">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="*, Auto">
+                  <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                  <Button Grid.Column="1" Content="Remove" 
+                          Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).RemoveDirectoryCommand}"
+                          CommandParameter="{Binding}"/>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+
+          <Grid ColumnDefinitions="*, Auto">
+            <TextBox x:Name="NewDirPath" Grid.Column="0" PlaceholderText="C:\Games\" Margin="0,0,10,0"/>
+            <Button Grid.Column="1" Content="Add Directory" 
+                    Command="{Binding AddDirectoryCommand}" 
+                    CommandParameter="{Binding #NewDirPath.Text}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- Save -->
+      <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,10,0,0">
+        <Button Command="{Binding SaveSettingsCommand}" Content="Save Settings" Classes="accent" Padding="20,10"/>
+        <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#4caf50"/>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="SteamSync.UI.Views.CloudFailureDialog"
+        Title="Cloud Detection Failed"
+        Width="460" Height="260"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#1e1e1e"
+        ExtendClientAreaToDecorationsHint="False">
+
+  <Grid RowDefinitions="Auto, Auto, *" Margin="24">
+
+    <!-- Header -->
+    <StackPanel Grid.Row="0" Margin="0,0,0,12">
+      <TextBlock Text="⚠️ Cloud Detection Failed" FontSize="18" FontWeight="Bold" Foreground="#e5c07b" HorizontalAlignment="Center"/>
+    </StackPanel>
+
+    <!-- Error message -->
+    <Border Grid.Row="1" Background="#2d2d30" CornerRadius="4" Padding="12" Margin="0,0,0,16">
+      <TextBlock x:Name="ErrorMessageText" Text="" FontSize="12" Foreground="#cc6666"
+                 TextWrapping="Wrap" MaxHeight="60"/>
+    </Border>
+
+    <!-- Action buttons -->
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12" VerticalAlignment="Center">
+      <Button x:Name="RetryButton" Click="OnRetryClicked"
+              Content="🔄 Retry Cloud" Padding="16,10"
+              Background="#2d2d30" BorderBrush="#6a9955" BorderThickness="1.5"
+              Foreground="White" CornerRadius="4" Cursor="Hand"/>
+      <Button x:Name="FallbackButton" Click="OnFallbackClicked"
+              Content="🔌 Use Local Instead" Padding="16,10"
+              Background="#2d2d30" BorderBrush="#569cd6" BorderThickness="1.5"
+              Foreground="White" CornerRadius="4" Cursor="Hand"/>
+      <Button x:Name="CancelButton" Click="OnCancelClicked"
+              Content="Cancel" Padding="16,10"
+              Background="#333337" Foreground="#cccccc" CornerRadius="4"/>
+    </StackPanel>
+
+  </Grid>
+</Window>

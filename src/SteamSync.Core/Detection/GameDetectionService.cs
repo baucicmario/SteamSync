@@ -1,0 +1,152 @@
+using SteamSync.Core.Logging;
+using SteamSync.Core.Models;
+
+namespace SteamSync.Core.Detection;
+
+/// <summary>
+/// Orchestrates all game detectors and merges results into a unified list.
+/// Handles deduplication across sources and assigns Steam AppIDs.
+/// </summary>
+public class GameDetectionService
+{
+    private readonly List<IGameDetector> _detectors = new();
+    private readonly SyncLogger _logger;
+
+    public GameDetectionService(SyncLogger? logger = null)
+    {
+        _logger = logger ?? new SyncLogger();
+    }
+
+    /// <summary>
+    /// Registers a detector to be used during game scanning.
+    /// </summary>
+    public void RegisterDetector(IGameDetector detector)
+    {
+        _detectors.Add(detector);
+    }
+
+    /// <summary>
+    /// Configures the default set of detectors based on application settings.
+    /// </summary>
+    public void ConfigureDefaults(AppSettings settings)
+    {
+        _detectors.Clear();
+        _logger.Log("Debug", $"ConfigureDefaults called. DetectGog is: {settings.DetectGog}");
+
+        if (settings.DetectEpic)
+            _detectors.Add(new EpicGamesDetector());
+
+        if (settings.DetectGog)
+            _detectors.Add(new GogDetector());
+
+        if (settings.DetectUbisoft)
+            _detectors.Add(new UbisoftDetector());
+
+        if (settings.DetectEa)
+            _detectors.Add(new EaAppDetector());
+
+        if (settings.DetectBattleNet)
+            _detectors.Add(new BattleNetDetector());
+
+        if (settings.CustomScanDirectories.Count > 0)
+            _detectors.Add(new CustomFolderScanner(settings.CustomScanDirectories, _logger));
+
+        if (settings.UsePlayniteWorker && !string.IsNullOrWhiteSpace(settings.PlayniteWorkerPath))
+        {
+            _detectors.Add(new PlayniteWorkerClient(
+                settings.PlayniteWorkerPath,
+                "all",
+                settings.PlayniteWorkerTimeoutSeconds,
+                _logger));
+        }
+
+        _logger.Log("Detection", $"Configured {_detectors.Count} detector(s): {string.Join(", ", _detectors.Select(d => d.Name))}");
+    }
+
+    /// <summary>
+    /// Configures detectors for Cloud/Playnite mode.
+    /// Uses the out-of-process PlayniteWorker to authenticate and scrape platform APIs.
+    /// Custom folder scanner is still included if configured.
+    /// </summary>
+    public void ConfigurePlaynite(AppSettings settings)
+    {
+        _detectors.Clear();
+
+        _detectors.Add(new PlayniteWorkerClient(
+            settings.PlayniteWorkerPath, "all", settings.PlayniteWorkerTimeoutSeconds, _logger));
+
+        // Still add custom folder scanner since Playnite doesn't cover DRM-free folders
+        if (settings.CustomScanDirectories.Count > 0)
+            _detectors.Add(new CustomFolderScanner(settings.CustomScanDirectories, _logger));
+
+        _logger.Log("Detection", $"Configured Playnite Cloud mode with {_detectors.Count} detector(s): {string.Join(", ", _detectors.Select(d => d.Name))}");
+    }
+
+    /// <summary>
+    /// Runs all registered detectors and returns a deduplicated, merged list of games.
+    /// Reports progress via the optional callback.
+    /// </summary>
+    public async Task<List<DetectedGame>> DetectAllGamesAsync(
+        IProgress<(string detectorName, int gamesFound)>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var allGames = new List<DetectedGame>();
+        _logger.Log("Detection", $"Starting detection with {_detectors.Count} detector(s)...");
+
+        foreach (var detector in _detectors)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                _logger.Log("Detection", $"Running detector: {detector.Name}...");
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+
+                var games = await detector.DetectGamesAsync(cancellationToken);
+                sw.Stop();
+
+                allGames.AddRange(games);
+                _logger.Log("Detection", $"{detector.Name} found {games.Count} game(s) in {sw.ElapsedMilliseconds}ms");
+                progress?.Report((detector.Name, games.Count));
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Detection", $"{detector.Name} failed", ex);
+                progress?.Report((detector.Name, 0));
+                
+                // If the core Playnite Worker fails, bubble it up so the UI can show the Fallback Dialog
+                if (detector is PlayniteWorkerClient)
+                {
+                    throw new Exception($"Cloud Detection Failed: {ex.Message}", ex);
+                }
+            }
+        }
+
+        // Deduplicate by title (case-insensitive)
+        var deduplicated = allGames
+            .GroupBy(g => g.Title, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                // Prefer the version with the most information
+                var best = group
+                    .OrderByDescending(g => g.IsInstalled ? 1 : 0)
+                    .ThenByDescending(g => g.ExePath != null ? 1 : 0)
+                    .First();
+
+                // Merge IsOwned across all sources
+                best.IsOwned = group.Any(g => g.IsOwned);
+                best.IsInstalled = group.Any(g => g.IsInstalled);
+
+                return best;
+            })
+            .OrderBy(g => g.Title)
+            .ToList();
+
+        _logger.Log("Detection", $"Detection complete: {allGames.Count} raw → {deduplicated.Count} deduplicated games.");
+        return deduplicated;
+    }
+}

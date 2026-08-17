@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SteamSync.UI.ViewModels"
+             xmlns:models="using:SteamSync.Core.Models"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="SteamSync.UI.Views.GameListView"
+             x:DataType="vm:GameListViewModel"
+             x:CompileBindings="False">
+
+  <Grid RowDefinitions="Auto, *, Auto, Auto, Auto">
+    
+    <!-- Top Action Bar -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,10">
+      <Button Command="{Binding DetectGamesCommand}" IsEnabled="{Binding !IsBusy}" Content="🔍 Detect Games" Classes="accent" Padding="12,8"/>
+      <Button Command="{Binding SyncToSteamCommand}" IsEnabled="{Binding !IsBusy}" Content="☁ Sync to Steam" Padding="12,8"/>
+      <Button Command="{Binding ForceSyncCommand}" IsEnabled="{Binding !IsBusy}" Content="⚡ Force Sync" Background="#8b0000" Foreground="White" Padding="12,8"/>
+      <Border Width="1" Background="#3e3e42" Margin="4,2"/>
+      <Button Command="{Binding SelectAllCommand}" Content="☑ Select All" Padding="10,8" Background="#333337" Foreground="#cccccc"/>
+      <Button Command="{Binding DeselectAllCommand}" Content="☐ Deselect All" Padding="10,8" Background="#333337" Foreground="#cccccc"/>
+      <Border Width="1" Background="#3e3e42" Margin="4,2"/>
+      <Button Command="{Binding ClearDatabaseCommand}" IsEnabled="{Binding !IsBusy}" Content="🗑 Clear Database" Background="#8b0000" Foreground="White" Padding="12,8"/>
+    </StackPanel>
+
+    <!-- Game List with Checkboxes -->
+    <Border Grid.Row="1" BorderThickness="1" BorderBrush="#3e3e42" CornerRadius="4" ClipToBounds="True">
+      <Grid RowDefinitions="Auto, *">
+        <!-- Column Headers -->
+        <Grid Grid.Row="0" ColumnDefinitions="40, 90, *, 60, 60, 110" Background="#2d2d30" Height="32">
+          <TextBlock Grid.Column="0" Text="✓" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888888" FontSize="12"/>
+          <TextBlock Grid.Column="1" Text="Platform" VerticalAlignment="Center" Margin="8,0" Foreground="#888888" FontSize="12"/>
+          <TextBlock Grid.Column="2" Text="Title" VerticalAlignment="Center" Margin="8,0" Foreground="#888888" FontSize="12"/>
+          <TextBlock Grid.Column="3" Text="Inst." VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888888" FontSize="12"/>
+          <TextBlock Grid.Column="4" Text="Art" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888888" FontSize="12"/>
+          <TextBlock Grid.Column="5" Text="AppID" VerticalAlignment="Center" Margin="8,0" Foreground="#888888" FontSize="12"/>
+        </Grid>
+
+        <!-- Game Items -->
+        <ListBox Grid.Row="1" ItemsSource="{Binding Games}" Background="#1e1e1e">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <Grid ColumnDefinitions="40, 90, *, 60, 60, 110" Margin="0,2">
+                <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding Platform}" VerticalAlignment="Center" Margin="8,0" Foreground="#aaaaaa" FontSize="13"/>
+                <TextBlock Grid.Column="2" Text="{Binding Title}" VerticalAlignment="Center" Margin="8,0" FontSize="13"/>
+                <TextBlock Grid.Column="3" Text="{Binding IsInstalled}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#6a9955" FontSize="12"/>
+                <TextBlock Grid.Column="4" Text="{Binding ArtworkCached}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#6a9955" FontSize="12"/>
+                <TextBlock Grid.Column="5" Text="{Binding SteamAppId}" VerticalAlignment="Center" Margin="8,0" Foreground="#569cd6" FontSize="12"/>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Grid>
+    </Border>
+
+    <!-- Progress Bar (full width) -->
+    <ProgressBar Grid.Row="2" Value="{Binding SyncProgress}" Height="6" Margin="0,8,0,4" IsVisible="{Binding IsBusy}" 
+                 Foreground="#569cd6" Background="#333337"/>
+
+    <!-- Status Footer -->
+    <Grid Grid.Row="3" ColumnDefinitions="*, Auto, Auto, Auto, Auto" Margin="0,4,0,8">
+      <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#cccccc" FontSize="12" TextTrimming="CharacterEllipsis"/>
+      
+      <!-- NEW: Platform Sync Indicator -->
+      <Border Grid.Column="1" Background="#007acc" CornerRadius="3" Padding="6,2" Margin="4,0" 
+              IsVisible="{Binding IsSyncingPlatformVisible}">
+        <TextBlock Text="{Binding CurrentSyncPlatform, StringFormat='Currently Syncing: {0}'}" 
+                   Foreground="White" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
+      </Border>
+
+      <Button Grid.Column="2" Command="{Binding ToggleLogPanelCommand}" Content="📋 Logs" Padding="8,4" Background="#333337" Foreground="#cccccc" FontSize="11" Margin="4,0"/>
+      <Button Grid.Column="3" Command="{Binding CopyLogsCommand}" Content="📎 Copy" Padding="8,4" Background="#333337" Foreground="#cccccc" FontSize="11" Margin="4,0"/>
+      <Button Grid.Column="4" Command="{Binding ClearLogsCommand}" Content="🗑 Clear" Padding="8,4" Background="#333337" Foreground="#cccccc" FontSize="11"/>
+    </Grid>
+    
+    <!-- Log Panel (collapsible) -->
+    <Border Grid.Row="4" Background="#1a1a1a" BorderThickness="1" BorderBrush="#3e3e42" CornerRadius="4"
+            IsVisible="{Binding IsLogPanelVisible}" Height="200" Margin="0,0,0,0">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <ItemsControl ItemsSource="{Binding Logger.LogLines}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Text="{Binding}" FontFamily="Consolas, Courier New, monospace" FontSize="11" 
+                         Foreground="#d4d4d4" Margin="8,1" TextWrapping="NoWrap"/>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Border>
+    
+  </Grid>
+</UserControl>

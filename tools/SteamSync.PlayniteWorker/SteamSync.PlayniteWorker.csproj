@@ -1,0 +1,162 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net462</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>SteamSync.PlayniteWorker</RootNamespace>
+    <AssemblyName>SteamSync.PlayniteWorker</AssemblyName>
+    <!-- Suppress NU1701 for PlayniteSDK compat warning -->
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PlayniteSDK" Version="6.14.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="AngleSharp" Version="0.9.9" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
+  </ItemGroup>
+
+  <!-- ====================================================================
+       Playnite Shared Source (from PlayniteRepo submodule)
+       These are utility classes that all Playnite library plugins depend on.
+       ==================================================================== -->
+  <PropertyGroup>
+    <PlayniteRepoRoot>..\..\extern\PlayniteExtensions\PlayniteRepo\source\playnite</PlayniteRepoRoot>
+    <ExtCommonRoot>..\..\extern\PlayniteExtensions\source\Generic\PlayniteExtensions.Common</ExtCommonRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Playnite Common utilities -->
+    <Compile Include="$(PlayniteRepoRoot)\common\FileSystem.cs" Link="Shared\FileSystem.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\common\Paths.cs" Link="Shared\Paths.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\common\Programs.cs" Link="Shared\Programs.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\common\IniParser.cs" Link="Shared\IniParser.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\common\GlobalRandom.cs" Link="Shared\GlobalRandom.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\common\ProcessMonitor.cs" Link="Shared\ProcessMonitor.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\common\ProcessStarter.cs" Link="Shared\ProcessStarter.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\common\web\Downloader.cs" Link="Shared\Downloader.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\common\web\HttpDownloader.cs" Link="Shared\HttpDownloader.cs" />
+
+    <!-- Playnite Common extensions -->
+    <Compile Include="$(PlayniteRepoRoot)\common\extensions\Enums.cs" Link="Shared\Enums.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\common\extensions\ObjectExtensions.cs" Link="Shared\ObjectExtensions.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\common\extensions\ProcessExtensions.cs" Link="Shared\ProcessExtensions.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\common\extensions\StringExtensions.cs" Link="Shared\StringExtensions.cs" />
+
+    <!-- Playnite Native interop -->
+    <Compile Include="$(PlayniteRepoRoot)\native\Fileapi.cs" Link="Shared\Native\Fileapi.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Gdi32.cs" Link="Shared\Native\Gdi32.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Kernel32.cs" Link="Shared\Native\Kernel32.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Ntdll.cs" Link="Shared\Native\Ntdll.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Powrprof.cs" Link="Shared\Native\Powrprof.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Processthreadsapi.cs" Link="Shared\Native\Processthreadsapi.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Psapi.cs" Link="Shared\Native\Psapi.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Shell32.cs" Link="Shared\Native\Shell32.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Shlwapi.cs" Link="Shared\Native\Shlwapi.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\User32.cs" Link="Shared\Native\User32.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Winbase.cs" Link="Shared\Native\Winbase.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Windef.cs" Link="Shared\Native\Windef.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\WinError.cs" Link="Shared\Native\WinError.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Wingdi.cs" Link="Shared\Native\Wingdi.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\Winnt.cs" Link="Shared\Native\Winnt.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\native\winuser.cs" Link="Shared\Native\winuser.cs" />
+
+    <!-- Playnite Extensions Common (PluginBase, etc.) -->
+    <Compile Include="$(ExtCommonRoot)\GlobalCommands.cs" Link="Shared\GlobalCommands.cs" />
+    <Compile Include="$(ExtCommonRoot)\PluginBase.cs" Link="Shared\PluginBase.cs" />
+    <Compile Include="$(ExtCommonRoot)\PluginSettingsViewModel.cs" Link="Shared\PluginSettingsViewModel.cs" />
+
+    <!-- Playnite converters (referenced by some plugins) -->
+    <Compile Include="$(PlayniteRepoRoot)\converters\InvertableBooleanToVisibilityConverter.cs" Link="Shared\InvertableBooleanToVisibilityConverter.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\converters\NegateConverter.cs" Link="Shared\NegateConverter.cs" />
+    <Compile Include="$(PlayniteRepoRoot)\converters\ObjectToStringConverter.cs" Link="Shared\ObjectToStringConverter.cs" />
+  </ItemGroup>
+
+  <!-- ====================================================================
+       GOG Library Plugin source files
+       ==================================================================== -->
+  <PropertyGroup>
+    <GogLibRoot>..\..\extern\PlayniteExtensions\source\Libraries\GogLibrary</GogLibRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(GogLibRoot)\Gog.cs" Link="Plugins\GOG\Gog.cs" />
+    <Compile Include="$(GogLibRoot)\GogClient.cs" Link="Plugins\GOG\GogClient.cs" />
+    <Compile Include="$(GogLibRoot)\GogLibrary.cs" Link="Plugins\GOG\GogLibrary.cs" />
+    <Compile Include="$(GogLibRoot)\Environment.cs" Link="Plugins\GOG\Environment.cs" />
+    <Compile Include="$(GogLibRoot)\GogGameController.cs" Link="Plugins\GOG\GogGameController.cs" />
+    <Compile Include="$(GogLibRoot)\GogLibrarySettingsViewModel.cs" Link="Plugins\GOG\GogLibrarySettingsViewModel.cs" />
+    <Compile Include="$(GogLibRoot)\GOGMetadataProvider.cs" Link="Plugins\GOG\GOGMetadataProvider.cs" />
+    <Compile Include="$(GogLibRoot)\LocalizationKeys.cs" Link="Plugins\GOG\LocalizationKeys.cs" />
+    <Compile Include="$(GogLibRoot)\Models\*.cs" Link="Plugins\GOG\Models\%(Filename)%(Extension)" />
+    <Compile Include="$(GogLibRoot)\Services\*.cs" Link="Plugins\GOG\Services\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- ====================================================================
+       Epic Library Plugin source files
+       ==================================================================== -->
+  <PropertyGroup>
+    <EpicLibRoot>..\..\extern\PlayniteExtensions\source\Libraries\EpicLibrary</EpicLibRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(EpicLibRoot)\EpicClient.cs" Link="Plugins\Epic\EpicClient.cs" />
+    <Compile Include="$(EpicLibRoot)\EpicLauncher.cs" Link="Plugins\Epic\EpicLauncher.cs" />
+    <Compile Include="$(EpicLibRoot)\EpicLibrary.cs" Link="Plugins\Epic\EpicLibrary.cs" />
+    <Compile Include="$(EpicLibRoot)\EpicGameController.cs" Link="Plugins\Epic\EpicGameController.cs" />
+    <Compile Include="$(EpicLibRoot)\EpicLibrarySettingsViewModel.cs" Link="Plugins\Epic\EpicLibrarySettingsViewModel.cs" />
+    <Compile Include="$(EpicLibRoot)\EpicMetadataProvider.cs" Link="Plugins\Epic\EpicMetadataProvider.cs" />
+    <Compile Include="$(EpicLibRoot)\LocalizationKeys.cs" Link="Plugins\Epic\LocalizationKeys.cs" />
+    <Compile Include="$(EpicLibRoot)\Models\*.cs" Link="Plugins\Epic\Models\%(Filename)%(Extension)" />
+    <Compile Include="$(EpicLibRoot)\Services\*.cs" Link="Plugins\Epic\Services\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- ====================================================================
+       Ubisoft/Uplay Library Plugin source files
+       ==================================================================== -->
+  <PropertyGroup>
+    <UplayLibRoot>..\..\extern\PlayniteExtensions\source\Libraries\UplayLibrary</UplayLibRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(UplayLibRoot)\Uplay.cs" Link="Plugins\Ubisoft\Uplay.cs" />
+    <Compile Include="$(UplayLibRoot)\UplayClient.cs" Link="Plugins\Ubisoft\UplayClient.cs" />
+    <Compile Include="$(UplayLibRoot)\UplayLibrary.cs" Link="Plugins\Ubisoft\UplayLibrary.cs" />
+    <Compile Include="$(UplayLibRoot)\UplayGameController.cs" Link="Plugins\Ubisoft\UplayGameController.cs" />
+    <Compile Include="$(UplayLibRoot)\UplayLibrarySettingsViewModel.cs" Link="Plugins\Ubisoft\UplayLibrarySettingsViewModel.cs" />
+    <Compile Include="$(UplayLibRoot)\LocalizationKeys.cs" Link="Plugins\Ubisoft\LocalizationKeys.cs" />
+    <Compile Include="$(UplayLibRoot)\Models\*.cs" Link="Plugins\Ubisoft\Models\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- ====================================================================
+       Battle.net Library Plugin source files
+       ==================================================================== -->
+  <PropertyGroup>
+    <BnetLibRoot>..\..\extern\PlayniteExtensions\source\Libraries\BattleNetLibrary</BnetLibRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(BnetLibRoot)\BattleNet.cs" Link="Plugins\BattleNet\BattleNet.cs" />
+    <Compile Include="$(BnetLibRoot)\BattleNetClient.cs" Link="Plugins\BattleNet\BattleNetClient.cs" />
+    <Compile Include="$(BnetLibRoot)\BattleNetLibrary.cs" Link="Plugins\BattleNet\BattleNetLibrary.cs" />
+    <Compile Include="$(BnetLibRoot)\BattleNetGameController.cs" Link="Plugins\BattleNet\BattleNetGameController.cs" />
+    <Compile Include="$(BnetLibRoot)\BattleNetLibrarySettingsViewModel.cs" Link="Plugins\BattleNet\BattleNetLibrarySettingsViewModel.cs" />
+    <Compile Include="$(BnetLibRoot)\LocalizationKeys.cs" Link="Plugins\BattleNet\LocalizationKeys.cs" />
+    <Compile Include="$(BnetLibRoot)\Models\*.cs" Link="Plugins\BattleNet\Models\%(Filename)%(Extension)" />
+    <Compile Include="$(BnetLibRoot)\Services\*.cs" Link="Plugins\BattleNet\Services\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- Exclude XAML views and code-behind (WPF UI not needed in worker) -->
+  <ItemGroup>
+    <Compile Remove="**\*SettingsView.xaml.cs" />
+    <Compile Remove="**\*View.xaml.cs" />
+    <None Remove="**\*.xaml" />
+    <Page Remove="**\*.xaml" />
+  </ItemGroup>
+
+  <!-- Framework references needed by Playnite plugins -->
+  <ItemGroup>
+    <Reference Include="System.Management" />
+    <Reference Include="System.Web" />
+  </ItemGroup>
+
+</Project>
