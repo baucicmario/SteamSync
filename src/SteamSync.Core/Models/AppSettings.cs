@@ -61,4 +61,12 @@ public class AppSettings
     /// <summary>Gets the full path to the SQLite database.</summary>
     public static string GetDatabaseFilePath()
         => Path.Combine(GetAppDataDirectory(), "steamsync.db");
+
+    /// <summary>Gets the directory for caching modified uninstalled game artwork.</summary>
+    public static string GetUninstalledImagesCacheDirectory()
+    {
+        var path = Path.Combine(GetAppDataDirectory(), "Cache", "UninstalledImages");
+        Directory.CreateDirectory(path);
+        return path;
+    }
 }

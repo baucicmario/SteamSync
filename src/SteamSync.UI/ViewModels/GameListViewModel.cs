@@ -23,6 +23,7 @@ public partial class GameListViewModel : ViewModelBase
     private readonly SteamInjectorService _injectorService;
     private readonly ArtworkManager _artworkManager;
     private readonly GameRepository _gameRepository;
+    private readonly UninstalledImageProcessor _uninstalledImageProcessor;
     private readonly SyncLogger _logger;
     private readonly SteamSyncDbContext? _db;
 
@@ -67,7 +68,9 @@ public partial class GameListViewModel : ViewModelBase
         _injectorService = new SteamInjectorService(_logger);
         _db = new SteamSyncDbContext();
         _gameRepository = new GameRepository(_db);
-        _artworkManager = new ArtworkManager(new SteamGridDbClient(""), _logger);
+        var client = new SteamGridDbClient("");
+        _artworkManager = new ArtworkManager(client, _logger);
+        _uninstalledImageProcessor = new UninstalledImageProcessor(client, _logger, _gameRepository);
     }
 
     public GameListViewModel(
@@ -75,12 +78,14 @@ public partial class GameListViewModel : ViewModelBase
         SteamInjectorService injectorService,
         ArtworkManager artworkManager,
         GameRepository gameRepository,
+        UninstalledImageProcessor uninstalledImageProcessor,
         SyncLogger logger)
     {
         _detectionService = detectionService;
         _injectorService = injectorService;
         _artworkManager = artworkManager;
         _gameRepository = gameRepository;
+        _uninstalledImageProcessor = uninstalledImageProcessor;
         _logger = logger;
         Logger = logger;
         LoadGamesFromDb();
@@ -350,6 +355,12 @@ public partial class GameListViewModel : ViewModelBase
                     }
                 }
             }
+
+            SyncProgress = 55;
+            StatusMessage = "Processing uninstalled games artwork...";
+            var uninstalledProgress = new Progress<string>(msg => StatusMessage = $"Uninstalled: {msg}");
+            var uninstalledPercentage = new Progress<double>(pct => SyncProgress = 55 + (pct / 100 * 5));
+            await _uninstalledImageProcessor.ProcessUninstalledGamesAsync(uninstalledProgress, uninstalledPercentage);
 
             SyncProgress = 60;
             StatusMessage = forceRestart ? "Force syncing Steam shortcuts..." : "Syncing Steam shortcuts...";

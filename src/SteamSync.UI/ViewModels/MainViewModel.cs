@@ -41,8 +41,9 @@ public partial class MainViewModel : ViewModelBase
         var settings = ReadSettings();
         var client = new SteamGridDbClient(settings.SteamGridDbApiKey);
         var artworkManager = new ArtworkManager(client, logger);
+        var uninstalledImageProcessor = new UninstalledImageProcessor(client, logger, gameRepo);
 
-        _gameListViewModel = new GameListViewModel(detectionService, injectorService, artworkManager, gameRepo, logger);
+        _gameListViewModel = new GameListViewModel(detectionService, injectorService, artworkManager, gameRepo, uninstalledImageProcessor, logger);
         _settingsViewModel = new SettingsViewModel();
 
         // Default view

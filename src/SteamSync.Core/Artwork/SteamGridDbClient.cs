@@ -21,6 +21,8 @@ public class SteamGridDbClient : IDisposable
         _imageClient = new HttpClient();
         UpdateApiKey(apiKey);
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        _httpClient.DefaultRequestHeaders.Add("User-Agent", "SteamSync/1.0 (https://github.com/baucicmario/SteamSync)");
+        _imageClient.DefaultRequestHeaders.Add("User-Agent", "SteamSync/1.0 (https://github.com/baucicmario/SteamSync)");
     }
 
     public void UpdateApiKey(string apiKey)
