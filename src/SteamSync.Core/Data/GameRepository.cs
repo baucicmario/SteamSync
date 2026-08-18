@@ -49,6 +49,16 @@ public class GameRepository
     }
 
     /// <summary>
+    /// Gets games that are owned but not currently installed.
+    /// </summary>
+    public List<DetectedGame> GetUninstalledOwnedGames()
+    {
+        using var cmd = _db.Connection.CreateCommand();
+        cmd.CommandText = "SELECT * FROM Games WHERE IsOwned = 1 AND IsInstalled = 0";
+        return ReadGames(cmd);
+    }
+
+    /// <summary>
     /// Inserts or updates a game. Uses Title+Platform as the unique key for upsert.
     /// </summary>
     public void Upsert(DetectedGame game)
