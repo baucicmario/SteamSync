@@ -194,6 +194,11 @@ public partial class GameListViewModel : ViewModelBase
                         if (!string.IsNullOrWhiteSpace(resolvedTitle))
                         {
                             game.Title = resolvedTitle;
+                            if (!string.IsNullOrWhiteSpace(game.ExePath))
+                            {
+                                game.SteamAppId = AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
+                            }
+                            game.ArtworkCached = ArtworkManager.IsArtworkCached(game.SteamAppId);
                         }
                         var current = Interlocked.Increment(ref resolved);
                         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -318,7 +323,7 @@ public partial class GameListViewModel : ViewModelBase
             {
                 _artworkManager.UpdateApiKey(settings.SteamGridDbApiKey);
                 StatusMessage = "Downloading artwork from SteamGridDB...";
-                var artworkGames = selectedGames.Where(g => !g.ArtworkCached).ToList();
+                var artworkGames = selectedGames.Where(g => !g.ArtworkCached && !ArtworkManager.IsArtworkCached(g.SteamAppId)).ToList();
                 double total = artworkGames.Count;
                 double current = 0;
 

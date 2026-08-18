@@ -154,7 +154,10 @@ public class ArtworkManager
             return false;
         }
 
-        var appId = AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
+        var appId = game.SteamAppId != 0 
+            ? game.SteamAppId 
+            : AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
+        game.SteamAppId = appId;
         _logger.Log("Artwork", $"AppID for '{game.Title}': {appId}, grid path: {gridPath}");
         var anyDownloaded = false;
         
@@ -245,11 +248,57 @@ public class ArtworkManager
             Path.Combine(gridPath, $"{appId}_icon.png"),
             "icon", progress, ct);
 
-        if (anyDownloaded)
-            game.ArtworkCached = true;
+        game.ArtworkCached = anyDownloaded || IsArtworkCached(appId);
 
-        _logger.Log("Artwork", $"Artwork for '{game.Title}': {(anyDownloaded ? "downloaded" : "none available")}");
+        _logger.Log("Artwork", $"Artwork for '{game.Title}': {(game.ArtworkCached ? "cached/downloaded" : "none available")}");
         return anyDownloaded;
+    }
+
+    /// <summary>
+    /// Checks whether any artwork files exist on disk in Steam's grid directory for the specified AppID.
+    /// </summary>
+    public static bool IsArtworkCached(uint appId)
+    {
+        if (appId == 0) return false;
+
+        var userIds = SteamPathResolver.GetUserIds();
+        if (userIds.Count == 0) return false;
+
+        var extensions = new[] { ".png", ".jpg", ".jpeg", ".webp", ".ico" };
+        var prefixes = new[] { $"{appId}p", $"{appId}", $"{appId}_hero", $"{appId}_logo", $"{appId}_icon" };
+
+        foreach (var userId in userIds)
+        {
+            var gridPath = SteamPathResolver.GetGridPath(userId);
+            if (string.IsNullOrWhiteSpace(gridPath) || !Directory.Exists(gridPath))
+                continue;
+
+            foreach (var prefix in prefixes)
+            {
+                foreach (var ext in extensions)
+                {
+                    if (File.Exists(Path.Combine(gridPath, prefix + ext)))
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks whether artwork is cached for a DetectedGame, calculating its AppID if needed.
+    /// </summary>
+    public static bool CheckArtworkCached(DetectedGame game)
+    {
+        var appId = game.SteamAppId;
+        if (appId == 0 && !string.IsNullOrWhiteSpace(game.ExePath))
+        {
+            appId = AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
+            game.SteamAppId = appId;
+        }
+
+        return IsArtworkCached(appId);
     }
 
     /// <summary>

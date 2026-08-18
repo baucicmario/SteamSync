@@ -58,6 +58,17 @@ public class GameRepository
         if (existing != null)
         {
             game.Id = existing.Id;
+            if (game.SteamAppId == 0 && existing.SteamAppId != 0)
+                game.SteamAppId = existing.SteamAppId;
+            if (!game.ArtworkCached && existing.ArtworkCached)
+                game.ArtworkCached = existing.ArtworkCached;
+            if (game.SteamGridDbId == null && existing.SteamGridDbId != null)
+                game.SteamGridDbId = existing.SteamGridDbId;
+            if (game.OfficialSteamAppId == null && existing.OfficialSteamAppId != null)
+                game.OfficialSteamAppId = existing.OfficialSteamAppId;
+            if (game.LastSynced == null && existing.LastSynced != null)
+                game.LastSynced = existing.LastSynced;
+
             Update(game);
         }
         else
@@ -93,7 +104,7 @@ public class GameRepository
         using var cmd = _db.Connection.CreateCommand();
         cmd.CommandText = @"
             INSERT INTO Games (Title, Platform, IsOwned, IsInstalled, ExePath, StartDir, LaunchArguments,
-                               SteamAppId, SteamGridDbId, ArtworkCached, IconPath, LastSynced, IsVR, OfficialSteamAppId)
+                                SteamAppId, SteamGridDbId, ArtworkCached, IconPath, LastSynced, IsVR, OfficialSteamAppId)
             VALUES (@Title, @Platform, @IsOwned, @IsInstalled, @ExePath, @StartDir, @LaunchArguments,
                     @SteamAppId, @SteamGridDbId, @ArtworkCached, @IconPath, @LastSynced, @IsVR, @OfficialSteamAppId);
             SELECT last_insert_rowid();";
@@ -178,7 +189,7 @@ public class GameRepository
 
         while (reader.Read())
         {
-            games.Add(new DetectedGame
+            var game = new DetectedGame
             {
                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
                 Title = reader.GetString(reader.GetOrdinal("Title")),
@@ -195,7 +206,21 @@ public class GameRepository
                 LastSynced = reader.IsDBNull(reader.GetOrdinal("LastSynced")) ? null : DateTime.Parse(reader.GetString(reader.GetOrdinal("LastSynced"))),
                 IsVR = reader.GetInt32(reader.GetOrdinal("IsVR")) != 0,
                 OfficialSteamAppId = reader.IsDBNull(reader.GetOrdinal("OfficialSteamAppId")) ? null : (uint)reader.GetInt64(reader.GetOrdinal("OfficialSteamAppId"))
-            });
+            };
+
+            // Calculate SteamAppId if missing
+            if (game.SteamAppId == 0 && !string.IsNullOrWhiteSpace(game.ExePath))
+            {
+                game.SteamAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
+            }
+
+            // Check if artwork is present on disk in Steam's grid folder
+            if (!game.ArtworkCached && game.SteamAppId != 0)
+            {
+                game.ArtworkCached = Artwork.ArtworkManager.IsArtworkCached(game.SteamAppId);
+            }
+
+            games.Add(game);
         }
 
         return games;
