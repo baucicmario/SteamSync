@@ -162,8 +162,11 @@ public class GameDetectionService
             _logger.Log("Detection", $"Could not read existing Steam shortcuts: {ex.Message}");
         }
 
+        int processedCount = 0;
         foreach (var group in deduplicatedGroups)
         {
+            processedCount++;
+            
             // Prefer the version with the most information
             var best = group
                 .OrderByDescending(g => g.IsInstalled ? 1 : 0)
@@ -202,6 +205,12 @@ public class GameDetectionService
             best.ArtworkCached = Artwork.ArtworkManager.IsArtworkCached(best.SteamAppId);
 
             deduplicated.Add(best);
+
+            // Report progress every few games or on the last game
+            if (processedCount % 5 == 0 || processedCount == deduplicatedGroups.Count)
+            {
+                progress?.Report(($"Metadata (VR/Artwork) [{processedCount}/{deduplicatedGroups.Count}]", processedCount));
+            }
         }
 
         deduplicated = deduplicated.OrderBy(g => g.Title).ToList();
