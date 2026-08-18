@@ -154,12 +154,18 @@ public class SteamInjectorService
                     LaunchOptions = game.LaunchArguments ?? string.Empty,
                     AllowDesktopConfig = true,
                     AllowOverlay = true,
+                    OpenVr = game.IsVR ? 1u : 0u, // Toggle "Include in VR library"
                     LastPlayTime = existing?.LastPlayTime ?? 0, // Preserve play time
                     Tags = new List<string> { SteamSyncTag },
                 };
 
+                if (game.IsVR)
+                {
+                    shortcut.Tags.Add("VR");
+                }
+
                 newManagedShortcuts.Add(shortcut);
-                _logger.Log("Sync", $"  → {game.Title} (AppID: {appId}, exe: {exe})");
+                _logger.Log("Sync", $"  → {game.Title} (AppID: {appId}, IsVR: {game.IsVR}, exe: {exe})");
             }
 
             // Merge: user shortcuts first, then managed shortcuts

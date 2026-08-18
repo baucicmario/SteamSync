@@ -127,24 +127,31 @@ public class GameDetectionService
         }
 
         // Deduplicate by title (case-insensitive)
-        var deduplicated = allGames
+        var deduplicatedGroups = allGames
             .GroupBy(g => g.Title, StringComparer.OrdinalIgnoreCase)
-            .Select(group =>
-            {
-                // Prefer the version with the most information
-                var best = group
-                    .OrderByDescending(g => g.IsInstalled ? 1 : 0)
-                    .ThenByDescending(g => g.ExePath != null ? 1 : 0)
-                    .First();
-
-                // Merge IsOwned across all sources
-                best.IsOwned = group.Any(g => g.IsOwned);
-                best.IsInstalled = group.Any(g => g.IsInstalled);
-
-                return best;
-            })
-            .OrderBy(g => g.Title)
             .ToList();
+
+        var deduplicated = new List<DetectedGame>();
+
+        foreach (var group in deduplicatedGroups)
+        {
+            // Prefer the version with the most information
+            var best = group
+                .OrderByDescending(g => g.IsInstalled ? 1 : 0)
+                .ThenByDescending(g => g.ExePath != null ? 1 : 0)
+                .First();
+
+            // Merge IsOwned across all sources
+            best.IsOwned = group.Any(g => g.IsOwned);
+            best.IsInstalled = group.Any(g => g.IsInstalled);
+
+            // Detect VR
+            best.IsVR = await Utilities.VrDetectionUtility.IsVrGameAsync(best, _logger);
+
+            deduplicated.Add(best);
+        }
+
+        deduplicated = deduplicated.OrderBy(g => g.Title).ToList();
 
         _logger.Log("Detection", $"Detection complete: {allGames.Count} raw → {deduplicated.Count} deduplicated games.");
         return deduplicated;

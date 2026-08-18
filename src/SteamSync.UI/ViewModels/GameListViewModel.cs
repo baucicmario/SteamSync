@@ -298,6 +298,12 @@ public partial class GameListViewModel : ViewModelBase
                 return;
             }
 
+            // Save any manual UI edits (e.g., IsVR toggles) back to the database
+            foreach (var game in selectedGames)
+            {
+                _gameRepository.Update(game);
+            }
+
             var userIds = SteamPathResolver.GetUserIds();
             if (userIds.Count == 0)
             {

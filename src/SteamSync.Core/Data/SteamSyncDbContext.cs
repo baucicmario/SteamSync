@@ -38,7 +38,8 @@ public class SteamSyncDbContext : IDisposable
                 IconPath TEXT,
                 LastSynced TEXT,
                 CreatedAt TEXT NOT NULL DEFAULT (datetime('now')),
-                UpdatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+                UpdatedAt TEXT NOT NULL DEFAULT (datetime('now')),
+                IsVR INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE INDEX IF NOT EXISTS IX_Games_Title ON Games(Title);
@@ -46,6 +47,16 @@ public class SteamSyncDbContext : IDisposable
             CREATE INDEX IF NOT EXISTS IX_Games_SteamAppId ON Games(SteamAppId);
         ";
         cmd.ExecuteNonQuery();
+
+        try
+        {
+            cmd.CommandText = "ALTER TABLE Games ADD COLUMN IsVR INTEGER NOT NULL DEFAULT 0;";
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqliteException)
+        {
+            // Column already exists
+        }
     }
 
     public SqliteConnection Connection => _connection;
