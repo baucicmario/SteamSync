@@ -29,31 +29,47 @@ namespace BattleNetLauncher
             string bnetPath = null;
             try
             {
-                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Battle.net"))
+                string[] subKeys = new string[]
                 {
-                    if (key != null)
+                    @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Battle.net",
+                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Battle.net"
+                };
+
+                foreach (var subKey in subKeys)
+                {
+                    using (RegistryKey key = Registry.LocalMachine.OpenSubKey(subKey))
                     {
-                        bnetPath = key.GetValue("InstallLocation") as string;
+                        if (key != null)
+                        {
+                            bnetPath = key.GetValue("InstallLocation") as string;
+                            if (!string.IsNullOrEmpty(bnetPath) && Directory.Exists(bnetPath))
+                                break;
+                        }
                     }
                 }
             }
             catch { }
             
-            if (string.IsNullOrEmpty(bnetPath))
+            if (string.IsNullOrEmpty(bnetPath) || !Directory.Exists(bnetPath))
             {
-                // Fallback attempt
-                bnetPath = @"C:\Program Files (x86)\Battle.net";
+                if (Directory.Exists(@"C:\Program Files (x86)\Battle.net"))
+                    bnetPath = @"C:\Program Files (x86)\Battle.net";
+                else if (Directory.Exists(@"C:\Program Files\Battle.net"))
+                    bnetPath = @"C:\Program Files\Battle.net";
             }
 
-            string exePath = Path.Combine(bnetPath, "Battle.net.exe");
-            if (File.Exists(exePath))
+            if (!string.IsNullOrEmpty(bnetPath))
             {
-                Process.Start(new ProcessStartInfo
+                string exePath = Path.Combine(bnetPath, "Battle.net.exe");
+                if (File.Exists(exePath))
                 {
-                    FileName = exePath,
-                    Arguments = "--exec=\"launch {{gameUid}}\"",
-                    UseShellExecute = true
-                });
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = exePath,
+                        Arguments = "--game={{gameUid}}",
+                        UseShellExecute = true
+                    });
+                }
             }
         }
     }
