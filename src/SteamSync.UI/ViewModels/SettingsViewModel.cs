@@ -1,11 +1,13 @@
+using System;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SteamSync.Core.Models;
 using System.Text.Json;
-using System;
-using System.Linq;
-using System.IO;
 
 namespace SteamSync.UI.ViewModels;
 
@@ -33,6 +35,9 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private ObservableCollection<string> _customScanDirectories = new();
+
+    [ObservableProperty]
+    private string _newDirectoryPath = string.Empty;
 
     [ObservableProperty]
     private string _statusMessage = string.Empty;
@@ -99,12 +104,86 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AddDirectory(string path)
+    private async Task BrowseDirectoryAsync()
     {
-        if (!string.IsNullOrWhiteSpace(path) && !CustomScanDirectories.Contains(path) && Directory.Exists(path))
+        try
         {
-            CustomScanDirectories.Add(path);
+            var parentWindow = Avalonia.Application.Current?.ApplicationLifetime is
+                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow : null;
+
+            if (parentWindow?.StorageProvider == null)
+            {
+                StatusMessage = "File browser is not available.";
+                return;
+            }
+
+            var folders = await parentWindow.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "Select Custom Scan Directory",
+                AllowMultiple = true
+            });
+
+            if (folders != null && folders.Count > 0)
+            {
+                int addedCount = 0;
+                foreach (var folder in folders)
+                {
+                    var localPath = folder.TryGetLocalPath();
+                    if (!string.IsNullOrWhiteSpace(localPath) && Directory.Exists(localPath))
+                    {
+                        if (!CustomScanDirectories.Any(d => string.Equals(d, localPath, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            CustomScanDirectories.Add(localPath);
+                            addedCount++;
+                        }
+                    }
+                }
+
+                if (addedCount > 0)
+                {
+                    StatusMessage = addedCount == 1
+                        ? "Scan directory added."
+                        : $"{addedCount} scan directories added.";
+                }
+                else
+                {
+                    StatusMessage = "Selected directory is already in the list.";
+                }
+            }
         }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error opening folder browser: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void AddDirectory(string? path = null)
+    {
+        var targetPath = string.IsNullOrWhiteSpace(path) ? NewDirectoryPath : path;
+        if (string.IsNullOrWhiteSpace(targetPath))
+        {
+            return;
+        }
+
+        targetPath = targetPath.Trim();
+
+        if (CustomScanDirectories.Any(d => string.Equals(d, targetPath, StringComparison.OrdinalIgnoreCase)))
+        {
+            StatusMessage = "Directory is already in the list.";
+            return;
+        }
+
+        if (!Directory.Exists(targetPath))
+        {
+            StatusMessage = $"Directory does not exist: {targetPath}";
+            return;
+        }
+
+        CustomScanDirectories.Add(targetPath);
+        NewDirectoryPath = string.Empty;
+        StatusMessage = $"Added directory: {targetPath}";
     }
 
     [RelayCommand]

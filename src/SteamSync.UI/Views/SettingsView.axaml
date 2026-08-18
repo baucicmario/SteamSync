@@ -37,6 +37,7 @@
       <Border Background="#1f1f24" Padding="18" CornerRadius="8" BorderThickness="1" BorderBrush="#2e2e38">
         <StackPanel Spacing="10">
           <TextBlock Text="Custom Scan Directories (DRM-Free / Standalone)" FontWeight="SemiBold" FontSize="15" Foreground="White"/>
+          <TextBlock Text="Add folders containing standalone or DRM-free games to scan." Foreground="#9e9ea8" FontSize="13"/>
           
           <ListBox ItemsSource="{Binding CustomScanDirectories}" Height="130" Background="#141418" CornerRadius="6">
             <ListBox.ItemTemplate>
@@ -52,12 +53,17 @@
             </ListBox.ItemTemplate>
           </ListBox>
 
-          <Grid ColumnDefinitions="*, Auto">
-            <TextBox x:Name="NewDirPath" Grid.Column="0" PlaceholderText="C:\Games\" Margin="0,0,10,0" CornerRadius="6"/>
-            <Button Grid.Column="1" Content="Add Directory" 
-                    Background="#2d2d36" Foreground="White" CornerRadius="6" Padding="14,8"
-                    Command="{Binding AddDirectoryCommand}" 
-                    CommandParameter="{Binding #NewDirPath.Text}"/>
+          <Grid ColumnDefinitions="*, Auto, Auto">
+            <TextBox Grid.Column="0" 
+                     Text="{Binding NewDirectoryPath}"
+                     PlaceholderText="Enter path or click Browse..." 
+                     Margin="0,0,8,0" CornerRadius="6"/>
+            <Button Grid.Column="1" Content="Browse..." 
+                    Background="#2d2d36" Foreground="White" CornerRadius="6" Padding="14,8" Margin="0,0,8,0"
+                    Command="{Binding BrowseDirectoryCommand}"/>
+            <Button Grid.Column="2" Content="Add Directory" 
+                    Background="#3b82f6" Foreground="White" CornerRadius="6" Padding="14,8"
+                    Command="{Binding AddDirectoryCommand}"/>
           </Grid>
         </StackPanel>
       </Border>
