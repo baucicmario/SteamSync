@@ -31,6 +31,10 @@
           <CheckBox IsChecked="{Binding DetectEa}" Content="EA App"/>
           <CheckBox IsChecked="{Binding DetectBattleNet}" Content="Battle.net"/>
           <CheckBox IsChecked="{Binding DetectRockstar}" Content="Rockstar Games"/>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <CheckBox IsChecked="{Binding DetectXbox}" Content="Xbox / Windows Store"/>
+            <TextBlock Text="(Installed games only)" Foreground="#9e9ea8" FontSize="13" VerticalAlignment="Center"/>
+          </StackPanel>
         </StackPanel>
       </Border>
 

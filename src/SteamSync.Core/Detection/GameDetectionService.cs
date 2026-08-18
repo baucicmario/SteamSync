@@ -52,6 +52,9 @@ public class GameDetectionService
         if (settings.DetectRockstar)
             _detectors.Add(new RockstarDetector());
 
+        if (settings.DetectXbox)
+            _detectors.Add(new XboxDetector());
+
         if (settings.CustomScanDirectories.Count > 0)
             _detectors.Add(new CustomFolderScanner(settings.CustomScanDirectories, _logger));
 
