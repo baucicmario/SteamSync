@@ -51,13 +51,27 @@
       <Grid RowDefinitions="Auto, *">
         <!-- Column Headers -->
         <Grid Grid.Row="0" ColumnDefinitions="44, 100, *, 65, 65, 48, 120" Background="#222228" Height="36">
-          <TextBlock Grid.Column="0" Text="✓" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
-          <TextBlock Grid.Column="1" Text="Platform" VerticalAlignment="Center" Margin="8,0" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
-          <TextBlock Grid.Column="2" Text="Title" VerticalAlignment="Center" Margin="8,0" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
-          <TextBlock Grid.Column="3" Text="Installed" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
-          <TextBlock Grid.Column="4" Text="Artwork" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
-          <TextBlock Grid.Column="5" Text="VR" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold" ToolTip.Tip="Include in Steam VR Library"/>
-          <TextBlock Grid.Column="6" Text="Steam AppID" VerticalAlignment="Center" Margin="8,0" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          <Button Grid.Column="0" Command="{Binding SortCommand}" CommandParameter="Selected" Background="Transparent" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderThickness="0" CornerRadius="0" HorizontalContentAlignment="Center">
+            <TextBlock Text="✓" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          </Button>
+          <Button Grid.Column="1" Command="{Binding SortCommand}" CommandParameter="Platform" Background="Transparent" Padding="8,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderThickness="0" CornerRadius="0" HorizontalContentAlignment="Left">
+            <TextBlock Text="Platform" VerticalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          </Button>
+          <Button Grid.Column="2" Command="{Binding SortCommand}" CommandParameter="Title" Background="Transparent" Padding="8,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderThickness="0" CornerRadius="0" HorizontalContentAlignment="Left">
+            <TextBlock Text="Title" VerticalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          </Button>
+          <Button Grid.Column="3" Command="{Binding SortCommand}" CommandParameter="Installed" Background="Transparent" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderThickness="0" CornerRadius="0" HorizontalContentAlignment="Center">
+            <TextBlock Text="Installed" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          </Button>
+          <Button Grid.Column="4" Command="{Binding SortCommand}" CommandParameter="Artwork" Background="Transparent" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderThickness="0" CornerRadius="0" HorizontalContentAlignment="Center">
+            <TextBlock Text="Artwork" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          </Button>
+          <Button Grid.Column="5" Command="{Binding SortCommand}" CommandParameter="VR" Background="Transparent" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderThickness="0" CornerRadius="0" HorizontalContentAlignment="Center" ToolTip.Tip="Include in Steam VR Library">
+            <TextBlock Text="VR" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          </Button>
+          <Button Grid.Column="6" Command="{Binding SortCommand}" CommandParameter="AppID" Background="Transparent" Padding="8,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderThickness="0" CornerRadius="0" HorizontalContentAlignment="Left">
+            <TextBlock Text="Steam AppID" VerticalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          </Button>
         </Grid>
 
         <!-- Game Items -->

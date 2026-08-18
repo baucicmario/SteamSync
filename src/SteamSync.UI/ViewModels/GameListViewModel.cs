@@ -50,6 +50,12 @@ public partial class GameListViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSyncingPlatformVisible;
 
+    [ObservableProperty]
+    private string _currentSortColumn = string.Empty;
+
+    [ObservableProperty]
+    private bool _isSortAscending = true;
+
     public SyncLogger Logger { get; }
 
     public GameListViewModel()
@@ -89,6 +95,7 @@ public partial class GameListViewModel : ViewModelBase
                 g.IsSelected = true; // Default all to selected
 
             Games = new ObservableCollection<DetectedGame>(dbGames);
+            ApplySort();
             StatusMessage = $"Loaded {Games.Count} games from database.";
         }
         catch (Exception ex)
@@ -381,9 +388,17 @@ public partial class GameListViewModel : ViewModelBase
     {
         foreach (var game in Games)
             game.IsSelected = true;
-        // Force UI refresh
-        var temp = Games;
-        Games = new ObservableCollection<DetectedGame>(temp);
+        
+        if (string.IsNullOrEmpty(CurrentSortColumn))
+        {
+            var temp = Games;
+            Games = new ObservableCollection<DetectedGame>(temp);
+        }
+        else
+        {
+            ApplySort();
+        }
+        
         _logger.Log("UI", $"Selected all {Games.Count} games.");
     }
 
@@ -392,10 +407,71 @@ public partial class GameListViewModel : ViewModelBase
     {
         foreach (var game in Games)
             game.IsSelected = false;
-        // Force UI refresh
-        var temp = Games;
-        Games = new ObservableCollection<DetectedGame>(temp);
+            
+        if (string.IsNullOrEmpty(CurrentSortColumn))
+        {
+            var temp = Games;
+            Games = new ObservableCollection<DetectedGame>(temp);
+        }
+        else
+        {
+            ApplySort();
+        }
+        
         _logger.Log("UI", "Deselected all games.");
+    }
+
+    [RelayCommand]
+    private void Sort(string column)
+    {
+        if (CurrentSortColumn == column)
+        {
+            IsSortAscending = !IsSortAscending;
+        }
+        else
+        {
+            CurrentSortColumn = column;
+            IsSortAscending = true;
+        }
+
+        ApplySort();
+    }
+
+    private void ApplySort()
+    {
+        if (Games == null || !Games.Any()) return;
+
+        IEnumerable<DetectedGame> sorted = Games;
+
+        switch (CurrentSortColumn)
+        {
+            case "Platform":
+                sorted = IsSortAscending ? Games.OrderBy(g => g.Platform).ThenBy(g => g.Title) : Games.OrderByDescending(g => g.Platform).ThenBy(g => g.Title);
+                break;
+            case "Title":
+                sorted = IsSortAscending ? Games.OrderBy(g => g.Title) : Games.OrderByDescending(g => g.Title);
+                break;
+            case "Installed":
+                sorted = IsSortAscending ? Games.OrderByDescending(g => g.IsInstalled).ThenBy(g => g.Title) : Games.OrderBy(g => g.IsInstalled).ThenBy(g => g.Title);
+                break;
+            case "Artwork":
+                sorted = IsSortAscending ? Games.OrderByDescending(g => g.ArtworkCached).ThenBy(g => g.Title) : Games.OrderBy(g => g.ArtworkCached).ThenBy(g => g.Title);
+                break;
+            case "VR":
+                sorted = IsSortAscending ? Games.OrderByDescending(g => g.IsVR).ThenBy(g => g.Title) : Games.OrderBy(g => g.IsVR).ThenBy(g => g.Title);
+                break;
+            case "AppID":
+                sorted = IsSortAscending ? Games.OrderBy(g => g.SteamAppId).ThenBy(g => g.Title) : Games.OrderByDescending(g => g.SteamAppId).ThenBy(g => g.Title);
+                break;
+            case "Selected":
+                sorted = IsSortAscending ? Games.OrderByDescending(g => g.IsSelected).ThenBy(g => g.Title) : Games.OrderBy(g => g.IsSelected).ThenBy(g => g.Title);
+                break;
+        }
+
+        if (!string.IsNullOrEmpty(CurrentSortColumn))
+        {
+            Games = new ObservableCollection<DetectedGame>(sorted.ToList());
+        }
     }
 
     [RelayCommand]
