@@ -1,5 +1,6 @@
 using SteamSync.Core.Logging;
 using SteamSync.Core.Models;
+using SteamSync.Core.Steam;
 
 namespace SteamSync.Core.Detection;
 
@@ -133,6 +134,34 @@ public class GameDetectionService
 
         var deduplicated = new List<DetectedGame>();
 
+        // Load existing Steam shortcuts to match AppIDs or VR status if already configured
+        var existingShortcutsByTitle = new Dictionary<string, SteamShortcut>(StringComparer.OrdinalIgnoreCase);
+        var existingShortcutsByExe = new Dictionary<string, SteamShortcut>(StringComparer.OrdinalIgnoreCase);
+
+        try
+        {
+            var userIds = SteamPathResolver.GetUserIds();
+            foreach (var userId in userIds)
+            {
+                var vdfPath = SteamPathResolver.GetShortcutsVdfPath(userId);
+                if (vdfPath != null && File.Exists(vdfPath))
+                {
+                    var shortcuts = ShortcutsVdfParser.Parse(vdfPath);
+                    foreach (var sc in shortcuts)
+                    {
+                        if (!string.IsNullOrWhiteSpace(sc.AppName))
+                            existingShortcutsByTitle[sc.AppName] = sc;
+                        if (!string.IsNullOrWhiteSpace(sc.Exe))
+                            existingShortcutsByExe[sc.Exe.Trim('"')] = sc;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Detection", $"Could not read existing Steam shortcuts: {ex.Message}");
+        }
+
         foreach (var group in deduplicatedGroups)
         {
             // Prefer the version with the most information
@@ -145,8 +174,32 @@ public class GameDetectionService
             best.IsOwned = group.Any(g => g.IsOwned);
             best.IsInstalled = group.Any(g => g.IsInstalled);
 
-            // Detect VR
-            best.IsVR = await Utilities.VrDetectionUtility.IsVrGameAsync(best, _logger);
+            // Calculate SteamAppId
+            if (!string.IsNullOrWhiteSpace(best.ExePath))
+            {
+                best.SteamAppId = Steam.AppIdGenerator.GenerateShortcutAppId(best.ExePath, best.Title);
+            }
+            else if (existingShortcutsByTitle.TryGetValue(best.Title, out var scByTitle))
+            {
+                best.SteamAppId = scByTitle.AppId;
+            }
+
+            // Match with existing shortcut if present
+            if (existingShortcutsByTitle.TryGetValue(best.Title, out var match) ||
+                (!string.IsNullOrWhiteSpace(best.ExePath) && existingShortcutsByExe.TryGetValue(best.ExePath, out match)))
+            {
+                if (match.OpenVr == 1)
+                    best.IsVR = true;
+            }
+
+            // Detect VR if not already flagged
+            if (!best.IsVR)
+            {
+                best.IsVR = await Utilities.VrDetectionUtility.IsVrGameAsync(best, _logger);
+            }
+
+            // Check if artwork is cached on disk in Steam's grid directory
+            best.ArtworkCached = Artwork.ArtworkManager.IsArtworkCached(best.SteamAppId);
 
             deduplicated.Add(best);
         }

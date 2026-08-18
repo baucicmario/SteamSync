@@ -1,58 +1,77 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace SteamSync.Core.Models;
 
 /// <summary>
 /// Represents a game detected by any source (launcher, custom folder scanner, or Playnite worker).
 /// Central data model used across all modules.
+/// Inherits from ObservableObject so UI bindings update in real time.
 /// </summary>
-public class DetectedGame
+public partial class DetectedGame : ObservableObject
 {
     /// <summary>Database primary key.</summary>
-    public int Id { get; set; }
+    [ObservableProperty]
+    private int _id;
 
     /// <summary>Display title of the game (cleaned/sanitized).</summary>
-    public string Title { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string _title = string.Empty;
 
     /// <summary>Source platform: "Epic", "GOG", "Ubisoft", "EA", "BattleNet", "Custom", etc.</summary>
-    public string Platform { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string _platform = string.Empty;
 
     /// <summary>Whether the user owns this title on the platform.</summary>
-    public bool IsOwned { get; set; }
+    [ObservableProperty]
+    private bool _isOwned;
 
     /// <summary>Whether the game is currently installed on disk.</summary>
-    public bool IsInstalled { get; set; }
+    [ObservableProperty]
+    private bool _isInstalled;
 
     /// <summary>Full path to the game executable.</summary>
-    public string? ExePath { get; set; }
+    [ObservableProperty]
+    private string? _exePath;
 
     /// <summary>Working directory for launch (defaults to exe parent directory).</summary>
-    public string? StartDir { get; set; }
+    [ObservableProperty]
+    private string? _startDir;
 
     /// <summary>Command-line arguments to pass when launching.</summary>
-    public string? LaunchArguments { get; set; }
+    [ObservableProperty]
+    private string? _launchArguments;
 
     /// <summary>Calculated Non-Steam AppID (CRC32-based, matches BoilR/Steam spec).</summary>
-    public uint SteamAppId { get; set; }
+    [ObservableProperty]
+    private uint _steamAppId;
 
     /// <summary>The official Steam Store AppID if known (used as fallback for artwork).</summary>
-    public uint? OfficialSteamAppId { get; set; }
+    [ObservableProperty]
+    private uint? _officialSteamAppId;
 
     /// <summary>SteamGridDB game ID for artwork lookups.</summary>
-    public int? SteamGridDbId { get; set; }
+    [ObservableProperty]
+    private int? _steamGridDbId;
 
     /// <summary>Last time this game was synced to Steam shortcuts.</summary>
-    public DateTime? LastSynced { get; set; }
+    [ObservableProperty]
+    private DateTime? _lastSynced;
 
     /// <summary>Whether artwork has been cached locally.</summary>
-    public bool ArtworkCached { get; set; }
+    [ObservableProperty]
+    private bool _artworkCached;
 
     /// <summary>Icon path for display in the UI.</summary>
-    public string? IconPath { get; set; }
+    [ObservableProperty]
+    private string? _iconPath;
 
     /// <summary>Whether this game is selected for import. Transient UI state, not persisted.</summary>
-    public bool IsSelected { get; set; } = true;
+    [ObservableProperty]
+    private bool _isSelected = true;
 
     /// <summary>Whether this game is known to be VR compatible or VR only.</summary>
-    public bool IsVR { get; set; }
+    [ObservableProperty]
+    private bool _isVR;
 
     public override string ToString() => $"[{Platform}] {Title} (Installed={IsInstalled})";
 }
