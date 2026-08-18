@@ -121,6 +121,25 @@ public class EpicGamesDetector : IGameDetector
 
                         if (isGame)
                         {
+                            string storeSlug = null;
+                            if (item.TryGetProperty("customAttributes", out var attrs))
+                            {
+                                if (attrs.TryGetProperty("com.epicgames.app.productSlug", out var attr))
+                                {
+                                    var val = attr.TryGetProperty("value", out var v) ? v.GetString() : null;
+                                    if (!string.IsNullOrEmpty(val))
+                                    {
+                                        storeSlug = val.Replace("/home", "").Split('/')[0];
+                                    }
+                                }
+                            }
+
+                            if (string.IsNullOrWhiteSpace(storeSlug) && !string.IsNullOrWhiteSpace(title))
+                            {
+                                var sanitized = Utilities.TitleSanitizer.Sanitize(title);
+                                storeSlug = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+                            }
+
                             gamesMap[id] = new DetectedGame
                             {
                                 Title = title,
@@ -129,6 +148,7 @@ public class EpicGamesDetector : IGameDetector
                                 IsInstalled = false,
                                 ExePath = null,
                                 StartDir = null,
+                                LaunchArguments = storeSlug // Store slug for dummy generator
                             };
                         }
                     }

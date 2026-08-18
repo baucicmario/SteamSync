@@ -65,14 +65,41 @@ public class UninstalledImageProcessor
             {
                 await ProcessGameArtworkAsync(game, cacheDir, null, ct);
                 
-                if (game.Platform == "BattleNet" || game.Platform == "Battle.net")
+                if (game.Platform == "BattleNet" || game.Platform == "Battle.net" || game.Platform == "Epic")
                 {
-                    var gameUid = game.LaunchArguments?.Replace("battlenet://launch/", "") ?? Utilities.TitleSanitizer.Sanitize(game.Title);
-                    var generator = new Steam.BattleNetExecutableGenerator(_logger);
-                    var exeDir = Path.Combine(cacheDir, "Executables", "BattleNet");
-                    var exePath = Path.Combine(exeDir, $"{gameUid}.exe");
+                    bool generated = false;
+                    string exePath = string.Empty;
                     
-                    if (generator.GenerateExecutable(gameUid, exePath))
+                    if (game.Platform == "BattleNet" || game.Platform == "Battle.net")
+                    {
+                        var gameUid = game.LaunchArguments?.Replace("battlenet://launch/", "") ?? Utilities.TitleSanitizer.Sanitize(game.Title);
+                        var generator = new Steam.BattleNetExecutableGenerator(_logger);
+                        var exeDir = Path.Combine(cacheDir, "Executables", "BattleNet");
+                        exePath = Path.Combine(exeDir, $"{gameUid}.exe");
+                        generated = generator.GenerateExecutable(gameUid, exePath);
+                    }
+                    else if (game.Platform == "Epic")
+                    {
+                        var storeSlug = game.LaunchArguments;
+                        if (storeSlug != null && storeSlug.Length == 32 && System.Text.RegularExpressions.Regex.IsMatch(storeSlug, @"^[a-fA-F0-9]{32}$"))
+                        {
+                            storeSlug = null; // Ignore old namespace fallbacks cached in the DB
+                        }
+
+                        if (string.IsNullOrWhiteSpace(storeSlug) && !string.IsNullOrWhiteSpace(game.Title))
+                        {
+                            var sanitized = Utilities.TitleSanitizer.Sanitize(game.Title);
+                            storeSlug = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+                        }
+
+                        var exeName = string.IsNullOrEmpty(storeSlug) ? Utilities.TitleSanitizer.Sanitize(game.Title) : storeSlug;
+                        var generator = new Steam.EpicExecutableGenerator(_logger);
+                        var exeDir = Path.Combine(cacheDir, "Executables", "Epic");
+                        exePath = Path.Combine(exeDir, $"{exeName}.exe");
+                        generated = generator.GenerateExecutable(storeSlug, exePath);
+                    }
+                    
+                    if (generated)
                     {
                         var oldAppId = game.SteamAppId != 0 
                             ? game.SteamAppId 
