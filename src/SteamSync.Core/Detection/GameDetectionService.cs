@@ -49,6 +49,9 @@ public class GameDetectionService
         if (settings.DetectBattleNet)
             _detectors.Add(new BattleNetDetector());
 
+        if (settings.DetectRockstar)
+            _detectors.Add(new RockstarDetector());
+
         if (settings.CustomScanDirectories.Count > 0)
             _detectors.Add(new CustomFolderScanner(settings.CustomScanDirectories, _logger));
 

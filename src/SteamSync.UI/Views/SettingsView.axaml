@@ -30,6 +30,7 @@
           <CheckBox IsChecked="{Binding DetectUbisoft}" Content="Ubisoft Connect"/>
           <CheckBox IsChecked="{Binding DetectEa}" Content="EA App"/>
           <CheckBox IsChecked="{Binding DetectBattleNet}" Content="Battle.net"/>
+          <CheckBox IsChecked="{Binding DetectRockstar}" Content="Rockstar Games"/>
         </StackPanel>
       </Border>
 
