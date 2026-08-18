@@ -3,28 +3,28 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SteamSync.UI.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="850" d:DesignHeight="600"
              x:Class="SteamSync.UI.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
   <ScrollViewer>
-    <StackPanel Spacing="20">
+    <StackPanel Spacing="16" Margin="0,0,10,16">
       
-      <TextBlock Text="Settings" FontSize="24" FontWeight="Bold"/>
+      <TextBlock Text="Settings" FontSize="22" FontWeight="Bold" Foreground="White" Margin="0,0,0,4"/>
 
       <!-- API Keys -->
-      <Border Background="#2d2d30" Padding="20" CornerRadius="5">
+      <Border Background="#1f1f24" Padding="18" CornerRadius="8" BorderThickness="1" BorderBrush="#2e2e38">
         <StackPanel Spacing="10">
-          <TextBlock Text="API Integration" FontWeight="Bold" FontSize="16"/>
-          <TextBlock Text="SteamGridDB API Key (Required for artwork):" Foreground="#cccccc"/>
-          <TextBox Text="{Binding SteamGridDbApiKey}" PasswordChar="*" PlaceholderText="Paste Bearer token here..."/>
+          <TextBlock Text="API Integration" FontWeight="SemiBold" FontSize="15" Foreground="White"/>
+          <TextBlock Text="SteamGridDB API Key (Required for artwork):" Foreground="#9e9ea8" FontSize="13"/>
+          <TextBox Text="{Binding SteamGridDbApiKey}" PasswordChar="*" PlaceholderText="Paste Bearer token here..." CornerRadius="6"/>
         </StackPanel>
       </Border>
 
       <!-- Launchers -->
-      <Border Background="#2d2d30" Padding="20" CornerRadius="5">
+      <Border Background="#1f1f24" Padding="18" CornerRadius="8" BorderThickness="1" BorderBrush="#2e2e38">
         <StackPanel Spacing="10">
-          <TextBlock Text="Auto-Detection" FontWeight="Bold" FontSize="16"/>
+          <TextBlock Text="Auto-Detection Platforms" FontWeight="SemiBold" FontSize="15" Foreground="White"/>
           <CheckBox IsChecked="{Binding DetectEpic}" Content="Epic Games Store"/>
           <CheckBox IsChecked="{Binding DetectGog}" Content="GOG Galaxy"/>
           <CheckBox IsChecked="{Binding DetectUbisoft}" Content="Ubisoft Connect"/>
@@ -34,16 +34,17 @@
       </Border>
 
       <!-- Custom Directories -->
-      <Border Background="#2d2d30" Padding="20" CornerRadius="5">
+      <Border Background="#1f1f24" Padding="18" CornerRadius="8" BorderThickness="1" BorderBrush="#2e2e38">
         <StackPanel Spacing="10">
-          <TextBlock Text="Custom Scan Directories (DRM-Free / Standalone)" FontWeight="Bold" FontSize="16"/>
+          <TextBlock Text="Custom Scan Directories (DRM-Free / Standalone)" FontWeight="SemiBold" FontSize="15" Foreground="White"/>
           
-          <ListBox ItemsSource="{Binding CustomScanDirectories}" Height="150" Background="#1e1e1e">
+          <ListBox ItemsSource="{Binding CustomScanDirectories}" Height="130" Background="#141418" CornerRadius="6">
             <ListBox.ItemTemplate>
               <DataTemplate>
-                <Grid ColumnDefinitions="*, Auto">
-                  <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                <Grid ColumnDefinitions="*, Auto" Margin="4,2">
+                  <TextBlock Text="{Binding}" VerticalAlignment="Center" Foreground="#e0e0ea"/>
                   <Button Grid.Column="1" Content="Remove" 
+                          Background="#3a2020" Foreground="#ff8080" CornerRadius="4" Padding="10,4"
                           Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).RemoveDirectoryCommand}"
                           CommandParameter="{Binding}"/>
                 </Grid>
@@ -52,8 +53,9 @@
           </ListBox>
 
           <Grid ColumnDefinitions="*, Auto">
-            <TextBox x:Name="NewDirPath" Grid.Column="0" PlaceholderText="C:\Games\" Margin="0,0,10,0"/>
+            <TextBox x:Name="NewDirPath" Grid.Column="0" PlaceholderText="C:\Games\" Margin="0,0,10,0" CornerRadius="6"/>
             <Button Grid.Column="1" Content="Add Directory" 
+                    Background="#2d2d36" Foreground="White" CornerRadius="6" Padding="14,8"
                     Command="{Binding AddDirectoryCommand}" 
                     CommandParameter="{Binding #NewDirPath.Text}"/>
           </Grid>
@@ -61,9 +63,9 @@
       </Border>
 
       <!-- Save -->
-      <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,10,0,0">
-        <Button Command="{Binding SaveSettingsCommand}" Content="Save Settings" Classes="accent" Padding="20,10"/>
-        <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#4caf50"/>
+      <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,4,0,0">
+        <Button Command="{Binding SaveSettingsCommand}" Content="Save Settings" Classes="accent" Padding="20,10" CornerRadius="6" FontWeight="SemiBold"/>
+        <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#4ade80" FontWeight="Medium"/>
       </StackPanel>
 
     </StackPanel>

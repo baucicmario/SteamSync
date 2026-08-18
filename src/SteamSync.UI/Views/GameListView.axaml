@@ -4,51 +4,76 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SteamSync.UI.ViewModels"
              xmlns:models="using:SteamSync.Core.Models"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             mc:Ignorable="d" d:DesignWidth="850" d:DesignHeight="600"
              x:Class="SteamSync.UI.Views.GameListView"
              x:DataType="vm:GameListViewModel"
              x:CompileBindings="False">
 
   <Grid RowDefinitions="Auto, *, Auto, Auto, Auto">
     
-    <!-- Top Action Bar -->
-    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,10">
-      <Button Command="{Binding DetectGamesCommand}" IsEnabled="{Binding !IsBusy}" Content="🔍 Detect Games" Classes="accent" Padding="12,8"/>
-      <Button Command="{Binding SyncToSteamCommand}" IsEnabled="{Binding !IsBusy}" Content="☁ Sync to Steam" Padding="12,8"/>
-      <Button Command="{Binding ForceSyncCommand}" IsEnabled="{Binding !IsBusy}" Content="⚡ Force Sync" Background="#8b0000" Foreground="White" Padding="12,8"/>
-      <Border Width="1" Background="#3e3e42" Margin="4,2"/>
-      <Button Command="{Binding SelectAllCommand}" Content="☑ Select All" Padding="10,8" Background="#333337" Foreground="#cccccc"/>
-      <Button Command="{Binding DeselectAllCommand}" Content="☐ Deselect All" Padding="10,8" Background="#333337" Foreground="#cccccc"/>
-      <Border Width="1" Background="#3e3e42" Margin="4,2"/>
-      <Button Command="{Binding ClearDatabaseCommand}" IsEnabled="{Binding !IsBusy}" Content="🗑 Clear Database" Background="#8b0000" Foreground="White" Padding="12,8"/>
-    </StackPanel>
+    <!-- Top Action Bar (Responsive WrapPanel) -->
+    <Border Grid.Row="0" Background="#1f1f24" BorderThickness="1" BorderBrush="#2e2e38" CornerRadius="8" Padding="8,6" Margin="0,0,0,12">
+      <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <!-- Detection & Sync Actions -->
+        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2,4,8,4">
+          <Button Command="{Binding DetectGamesCommand}" IsEnabled="{Binding !IsBusy}" 
+                  Content="🔍 Detect Games" Classes="accent" Padding="14,8" CornerRadius="6" FontWeight="SemiBold"/>
+          <Button Command="{Binding SyncToSteamCommand}" IsEnabled="{Binding !IsBusy}" 
+                  Content="☁ Sync to Steam" Background="#0284c7" Foreground="White" Padding="14,8" CornerRadius="6" FontWeight="SemiBold"/>
+          <Button Command="{Binding ForceSyncCommand}" IsEnabled="{Binding !IsBusy}" 
+                  Content="⚡ Force Sync" Background="#7c3aed" Foreground="White" Padding="12,8" CornerRadius="6"/>
+        </StackPanel>
+
+        <!-- Divider -->
+        <Border Width="1" Height="22" Background="#383844" Margin="2,4,8,4" VerticalAlignment="Center"/>
+
+        <!-- Selection Controls -->
+        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2,4,8,4">
+          <Button Command="{Binding SelectAllCommand}" Content="☑ Select All" Padding="10,8" 
+                  Background="#2d2d36" Foreground="#e0e0ea" CornerRadius="6"/>
+          <Button Command="{Binding DeselectAllCommand}" Content="☐ Deselect All" Padding="10,8" 
+                  Background="#2d2d36" Foreground="#e0e0ea" CornerRadius="6"/>
+        </StackPanel>
+
+        <!-- Divider -->
+        <Border Width="1" Height="22" Background="#383844" Margin="2,4,8,4" VerticalAlignment="Center"/>
+
+        <!-- Maintenance / Danger -->
+        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2,4,4,4">
+          <Button Command="{Binding ClearDatabaseCommand}" IsEnabled="{Binding !IsBusy}" 
+                  Content="🗑 Clear Database" Background="#b91c1c" Foreground="White" Padding="12,8" CornerRadius="6"/>
+        </StackPanel>
+      </WrapPanel>
+    </Border>
 
     <!-- Game List with Checkboxes -->
-    <Border Grid.Row="1" BorderThickness="1" BorderBrush="#3e3e42" CornerRadius="4" ClipToBounds="True">
+    <Border Grid.Row="1" BorderThickness="1" BorderBrush="#2e2e38" CornerRadius="8" ClipToBounds="True" Background="#18181c">
       <Grid RowDefinitions="Auto, *">
         <!-- Column Headers -->
-        <Grid Grid.Row="0" ColumnDefinitions="40, 90, *, 60, 60, 40, 110" Background="#2d2d30" Height="32">
-          <TextBlock Grid.Column="0" Text="✓" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888888" FontSize="12"/>
-          <TextBlock Grid.Column="1" Text="Platform" VerticalAlignment="Center" Margin="8,0" Foreground="#888888" FontSize="12"/>
-          <TextBlock Grid.Column="2" Text="Title" VerticalAlignment="Center" Margin="8,0" Foreground="#888888" FontSize="12"/>
-          <TextBlock Grid.Column="3" Text="Inst." VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888888" FontSize="12"/>
-          <TextBlock Grid.Column="4" Text="Art" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888888" FontSize="12"/>
-          <TextBlock Grid.Column="5" Text="VR" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888888" FontSize="12" ToolTip.Tip="Include in Steam VR Library"/>
-          <TextBlock Grid.Column="6" Text="AppID" VerticalAlignment="Center" Margin="8,0" Foreground="#888888" FontSize="12"/>
+        <Grid Grid.Row="0" ColumnDefinitions="44, 100, *, 65, 65, 48, 120" Background="#222228" Height="36">
+          <TextBlock Grid.Column="0" Text="✓" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          <TextBlock Grid.Column="1" Text="Platform" VerticalAlignment="Center" Margin="8,0" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          <TextBlock Grid.Column="2" Text="Title" VerticalAlignment="Center" Margin="8,0" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          <TextBlock Grid.Column="3" Text="Installed" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          <TextBlock Grid.Column="4" Text="Artwork" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
+          <TextBlock Grid.Column="5" Text="VR" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold" ToolTip.Tip="Include in Steam VR Library"/>
+          <TextBlock Grid.Column="6" Text="Steam AppID" VerticalAlignment="Center" Margin="8,0" Foreground="#9494a0" FontSize="12" FontWeight="SemiBold"/>
         </Grid>
 
         <!-- Game Items -->
-        <ListBox Grid.Row="1" ItemsSource="{Binding Games}" Background="#1e1e1e">
+        <ListBox Grid.Row="1" ItemsSource="{Binding Games}" Background="Transparent">
           <ListBox.ItemTemplate>
             <DataTemplate>
-              <Grid ColumnDefinitions="40, 90, *, 60, 60, 40, 110" Margin="0,2">
+              <Grid ColumnDefinitions="44, 100, *, 65, 65, 48, 120" Margin="0,2">
                 <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="{Binding Platform}" VerticalAlignment="Center" Margin="8,0" Foreground="#aaaaaa" FontSize="13"/>
-                <TextBlock Grid.Column="2" Text="{Binding Title}" VerticalAlignment="Center" Margin="8,0" FontSize="13"/>
-                <TextBlock Grid.Column="3" Text="{Binding IsInstalled}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#6a9955" FontSize="12"/>
-                <TextBlock Grid.Column="4" Text="{Binding ArtworkCached}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#6a9955" FontSize="12"/>
+                <Border Grid.Column="1" Background="#26262e" CornerRadius="4" Padding="6,2" Margin="4,0" HorizontalAlignment="Left" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Platform}" Foreground="#b4b4c2" FontSize="11" FontWeight="Medium"/>
+                </Border>
+                <TextBlock Grid.Column="2" Text="{Binding Title}" VerticalAlignment="Center" Margin="8,0" FontSize="13" Foreground="#f4f4f6" TextTrimming="CharacterEllipsis"/>
+                <TextBlock Grid.Column="3" Text="{Binding IsInstalled}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#4ade80" FontSize="12"/>
+                <TextBlock Grid.Column="4" Text="{Binding ArtworkCached}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#4ade80" FontSize="12"/>
                 <CheckBox Grid.Column="5" IsChecked="{Binding IsVR}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="6" Text="{Binding SteamAppId}" VerticalAlignment="Center" Margin="8,0" Foreground="#569cd6" FontSize="12"/>
+                <TextBlock Grid.Column="6" Text="{Binding SteamAppId}" VerticalAlignment="Center" Margin="8,0" Foreground="#60a5fa" FontSize="12" FontFamily="Consolas, monospace"/>
               </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>
@@ -58,33 +83,40 @@
 
     <!-- Progress Bar (full width) -->
     <ProgressBar Grid.Row="2" Value="{Binding SyncProgress}" Height="6" Margin="0,8,0,4" IsVisible="{Binding IsBusy}" 
-                 Foreground="#569cd6" Background="#333337"/>
+                 Foreground="#0284c7" Background="#26262e" CornerRadius="3"/>
 
     <!-- Status Footer -->
-    <Grid Grid.Row="3" ColumnDefinitions="*, Auto, Auto, Auto, Auto" Margin="0,4,0,8">
-      <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#cccccc" FontSize="12" TextTrimming="CharacterEllipsis"/>
-      
-      <!-- NEW: Platform Sync Indicator -->
-      <Border Grid.Column="1" Background="#007acc" CornerRadius="3" Padding="6,2" Margin="4,0" 
-              IsVisible="{Binding IsSyncingPlatformVisible}">
-        <TextBlock Text="{Binding CurrentSyncPlatform, StringFormat='Currently Syncing: {0}'}" 
-                   Foreground="White" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
-      </Border>
-
-      <Button Grid.Column="2" Command="{Binding ToggleLogPanelCommand}" Content="📋 Logs" Padding="8,4" Background="#333337" Foreground="#cccccc" FontSize="11" Margin="4,0"/>
-      <Button Grid.Column="3" Command="{Binding CopyLogsCommand}" Content="📎 Copy" Padding="8,4" Background="#333337" Foreground="#cccccc" FontSize="11" Margin="4,0"/>
-      <Button Grid.Column="4" Command="{Binding ClearLogsCommand}" Content="🗑 Clear" Padding="8,4" Background="#333337" Foreground="#cccccc" FontSize="11"/>
-    </Grid>
+    <Border Grid.Row="3" Background="#1f1f24" CornerRadius="6" Padding="10,6" Margin="0,6,0,6" BorderThickness="1" BorderBrush="#2e2e38">
+      <Grid ColumnDefinitions="*, Auto, Auto">
+        <!-- Status Message & Platform badge -->
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <!-- Platform Sync Indicator -->
+          <Border Background="#0284c7" CornerRadius="4" Padding="8,3"
+                  IsVisible="{Binding IsSyncingPlatformVisible}">
+            <TextBlock Text="{Binding CurrentSyncPlatform, StringFormat='Syncing: {0}'}" 
+                       Foreground="White" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
+          </Border>
+          <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#c8c8d2" FontSize="12" TextTrimming="CharacterEllipsis"/>
+        </StackPanel>
+        
+        <!-- Log action buttons -->
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="8,0,0,0">
+          <Button Command="{Binding ToggleLogPanelCommand}" Content="📋 Logs" Padding="10,5" Background="#2d2d36" Foreground="#e0e0ea" FontSize="11" CornerRadius="4"/>
+          <Button Command="{Binding CopyLogsCommand}" Content="📎 Copy" Padding="10,5" Background="#2d2d36" Foreground="#e0e0ea" FontSize="11" CornerRadius="4"/>
+          <Button Command="{Binding ClearLogsCommand}" Content="🗑 Clear" Padding="10,5" Background="#2d2d36" Foreground="#e0e0ea" FontSize="11" CornerRadius="4"/>
+        </StackPanel>
+      </Grid>
+    </Border>
     
     <!-- Log Panel (collapsible) -->
-    <Border Grid.Row="4" Background="#1a1a1a" BorderThickness="1" BorderBrush="#3e3e42" CornerRadius="4"
-            IsVisible="{Binding IsLogPanelVisible}" Height="200" Margin="0,0,0,0">
+    <Border Grid.Row="4" Background="#121215" BorderThickness="1" BorderBrush="#2e2e38" CornerRadius="6"
+            IsVisible="{Binding IsLogPanelVisible}" Height="200" Margin="0,2,0,0">
       <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
         <ItemsControl ItemsSource="{Binding Logger.LogLines}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
               <TextBlock Text="{Binding}" FontFamily="Consolas, Courier New, monospace" FontSize="11" 
-                         Foreground="#d4d4d4" Margin="8,1" TextWrapping="NoWrap"/>
+                         Foreground="#d4d4d8" Margin="8,2" TextWrapping="NoWrap"/>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
