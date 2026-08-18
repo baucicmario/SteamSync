@@ -26,6 +26,9 @@ public class AppSettings
     /// <summary>Whether to auto-detect Battle.net installations.</summary>
     public bool DetectBattleNet { get; set; } = true;
 
+    /// <summary>Whether to auto-detect Rockstar Games Launcher installations.</summary>
+    public bool DetectRockstar { get; set; } = true;
+
     /// <summary>Whether to use the Playnite worker for detection (fallback).</summary>
     public bool UsePlayniteWorker { get; set; } = false;
 
