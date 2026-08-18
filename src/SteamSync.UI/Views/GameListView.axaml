@@ -27,26 +27,28 @@
     <Border Grid.Row="1" BorderThickness="1" BorderBrush="#3e3e42" CornerRadius="4" ClipToBounds="True">
       <Grid RowDefinitions="Auto, *">
         <!-- Column Headers -->
-        <Grid Grid.Row="0" ColumnDefinitions="40, 90, *, 60, 60, 110" Background="#2d2d30" Height="32">
+        <Grid Grid.Row="0" ColumnDefinitions="40, 90, *, 60, 60, 40, 110" Background="#2d2d30" Height="32">
           <TextBlock Grid.Column="0" Text="✓" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888888" FontSize="12"/>
           <TextBlock Grid.Column="1" Text="Platform" VerticalAlignment="Center" Margin="8,0" Foreground="#888888" FontSize="12"/>
           <TextBlock Grid.Column="2" Text="Title" VerticalAlignment="Center" Margin="8,0" Foreground="#888888" FontSize="12"/>
           <TextBlock Grid.Column="3" Text="Inst." VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888888" FontSize="12"/>
           <TextBlock Grid.Column="4" Text="Art" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888888" FontSize="12"/>
-          <TextBlock Grid.Column="5" Text="AppID" VerticalAlignment="Center" Margin="8,0" Foreground="#888888" FontSize="12"/>
+          <TextBlock Grid.Column="5" Text="VR" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888888" FontSize="12" ToolTip.Tip="Include in Steam VR Library"/>
+          <TextBlock Grid.Column="6" Text="AppID" VerticalAlignment="Center" Margin="8,0" Foreground="#888888" FontSize="12"/>
         </Grid>
 
         <!-- Game Items -->
         <ListBox Grid.Row="1" ItemsSource="{Binding Games}" Background="#1e1e1e">
           <ListBox.ItemTemplate>
             <DataTemplate>
-              <Grid ColumnDefinitions="40, 90, *, 60, 60, 110" Margin="0,2">
+              <Grid ColumnDefinitions="40, 90, *, 60, 60, 40, 110" Margin="0,2">
                 <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 <TextBlock Grid.Column="1" Text="{Binding Platform}" VerticalAlignment="Center" Margin="8,0" Foreground="#aaaaaa" FontSize="13"/>
                 <TextBlock Grid.Column="2" Text="{Binding Title}" VerticalAlignment="Center" Margin="8,0" FontSize="13"/>
                 <TextBlock Grid.Column="3" Text="{Binding IsInstalled}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#6a9955" FontSize="12"/>
                 <TextBlock Grid.Column="4" Text="{Binding ArtworkCached}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#6a9955" FontSize="12"/>
-                <TextBlock Grid.Column="5" Text="{Binding SteamAppId}" VerticalAlignment="Center" Margin="8,0" Foreground="#569cd6" FontSize="12"/>
+                <CheckBox Grid.Column="5" IsChecked="{Binding IsVR}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="6" Text="{Binding SteamAppId}" VerticalAlignment="Center" Margin="8,0" Foreground="#569cd6" FontSize="12"/>
               </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>

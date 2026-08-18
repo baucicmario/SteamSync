@@ -48,5 +48,8 @@ public class DetectedGame
     /// <summary>Whether this game is selected for import. Transient UI state, not persisted.</summary>
     public bool IsSelected { get; set; } = true;
 
+    /// <summary>Whether this game is known to be VR compatible or VR only.</summary>
+    public bool IsVR { get; set; }
+
     public override string ToString() => $"[{Platform}] {Title} (Installed={IsInstalled})";
 }
