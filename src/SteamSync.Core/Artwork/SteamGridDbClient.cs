@@ -47,9 +47,9 @@ public class SteamGridDbClient : IDisposable
     /// </summary>
     public Task<List<SteamGridDbImage>> GetGridsAsync(int gameId, string? dimensions = null, CancellationToken ct = default)
     {
-        var url = $"{BaseUrl}/grids/game/{gameId}";
+        var url = $"{BaseUrl}/grids/game/{gameId}?mimes=image/png,image/jpeg&types=static";
         if (!string.IsNullOrEmpty(dimensions))
-            url += $"?dimensions={dimensions}";
+            url += $"&dimensions={dimensions}";
         return GetImagesAsync(url, ct);
     }
 
@@ -57,19 +57,19 @@ public class SteamGridDbClient : IDisposable
     /// Gets hero images (wide banner) for a game.
     /// </summary>
     public Task<List<SteamGridDbImage>> GetHeroesAsync(int gameId, CancellationToken ct = default)
-        => GetImagesAsync($"{BaseUrl}/heroes/game/{gameId}", ct);
+        => GetImagesAsync($"{BaseUrl}/heroes/game/{gameId}?mimes=image/png,image/jpeg&types=static", ct);
 
     /// <summary>
     /// Gets logo images for a game.
     /// </summary>
     public Task<List<SteamGridDbImage>> GetLogosAsync(int gameId, CancellationToken ct = default)
-        => GetImagesAsync($"{BaseUrl}/logos/game/{gameId}", ct);
+        => GetImagesAsync($"{BaseUrl}/logos/game/{gameId}?mimes=image/png&types=static", ct);
 
     /// <summary>
     /// Gets icon images for a game.
     /// </summary>
     public Task<List<SteamGridDbImage>> GetIconsAsync(int gameId, CancellationToken ct = default)
-        => GetImagesAsync($"{BaseUrl}/icons/game/{gameId}", ct);
+        => GetImagesAsync($"{BaseUrl}/icons/game/{gameId}?mimes=image/png,image/x-icon,image/vnd.microsoft.icon&types=static", ct);
 
     /// <summary>
     /// Downloads an image from a URL and returns its bytes.

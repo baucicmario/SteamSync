@@ -33,6 +33,9 @@ public class DetectedGame
     /// <summary>Calculated Non-Steam AppID (CRC32-based, matches BoilR/Steam spec).</summary>
     public uint SteamAppId { get; set; }
 
+    /// <summary>The official Steam Store AppID if known (used as fallback for artwork).</summary>
+    public uint? OfficialSteamAppId { get; set; }
+
     /// <summary>SteamGridDB game ID for artwork lookups.</summary>
     public int? SteamGridDbId { get; set; }
 

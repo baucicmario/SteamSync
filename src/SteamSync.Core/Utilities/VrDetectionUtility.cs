@@ -93,6 +93,9 @@ public static class VrDetectionUtility
                                     {
                                         continue;
                                     }
+                                    
+                                    // Cache the Official Steam AppId if it's not set
+                                    game.OfficialSteamAppId ??= (uint)match.Id;
 
                                     // 53 = VR Supported, 54 = VR Only
                                     if (appDetails.Data.Categories.Any(c => c.Id == 53 || c.Id == 54))

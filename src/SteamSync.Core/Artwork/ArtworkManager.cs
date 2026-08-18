@@ -157,34 +157,86 @@ public class ArtworkManager
         var appId = AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
         _logger.Log("Artwork", $"AppID for '{game.Title}': {appId}, grid path: {gridPath}");
         var anyDownloaded = false;
+        
+        // Dynamically fetch Official Steam AppID if missing (needed for fallbacks)
+        uint? steamAppId = game.OfficialSteamAppId;
+        if (steamAppId == null && !string.IsNullOrWhiteSpace(game.Title))
+        {
+            try
+            {
+                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+                var searchUrl = $"https://store.steampowered.com/api/storesearch/?term={Uri.EscapeDataString(game.Title)}&l=english&cc=US";
+                var searchJson = await http.GetStringAsync(searchUrl);
+                using var doc = System.Text.Json.JsonDocument.Parse(searchJson);
+                var items = doc.RootElement.GetProperty("items");
+                
+                if (items.GetArrayLength() > 0)
+                {
+                    var bestItem = items[0];
+                    bool foundExact = false;
+
+                    foreach (var item in items.EnumerateArray())
+                    {
+                        var name = item.GetProperty("name").GetString() ?? "";
+                        
+                        // If game is VR, prefer the ' VR' suffixed version if it exists
+                        if (game.IsVR && name.EndsWith(" VR", StringComparison.OrdinalIgnoreCase) &&
+                            string.Equals(name.Substring(0, name.Length - 3), game.Title, StringComparison.OrdinalIgnoreCase))
+                        {
+                            bestItem = item;
+                            break;
+                        }
+
+                        // Otherwise fallback to exact match
+                        if (!foundExact && string.Equals(name, game.Title, StringComparison.OrdinalIgnoreCase))
+                        {
+                            bestItem = item;
+                            foundExact = true;
+                        }
+                    }
+
+                    steamAppId = (uint)bestItem.GetProperty("id").GetInt32();
+                    game.OfficialSteamAppId = steamAppId;
+                    _logger.Log("Artwork", $"Dynamically resolved Official Steam AppID {steamAppId} for '{game.Title}'");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Artwork", $"Failed to dynamically resolve Steam AppID for '{game.Title}'", ex);
+            }
+        }
 
         // Download portrait grid/cover
         anyDownloaded |= await DownloadFirstImageAsync(
             gameId.Value,
             () => _client.GetGridsAsync(gameId.Value, "600x900", ct),
             Path.Combine(gridPath, $"{appId}p.png"),
-            "portrait grid", progress, ct);
+            "portrait grid", progress, ct,
+            steamAppId != null ? $"https://cdn.akamai.steamstatic.com/steam/apps/{steamAppId.Value}/library_600x900.jpg" : null);
 
         // Download landscape grid/banner (used in Big Picture Mode & Recent Games)
         anyDownloaded |= await DownloadFirstImageAsync(
             gameId.Value,
             () => _client.GetGridsAsync(gameId.Value, "460x215,920x430", ct),
             Path.Combine(gridPath, $"{appId}.png"),
-            "landscape grid", progress, ct);
+            "landscape grid", progress, ct,
+            steamAppId != null ? $"https://cdn.akamai.steamstatic.com/steam/apps/{steamAppId.Value}/header.jpg" : null);
 
         // Download hero
         anyDownloaded |= await DownloadFirstImageAsync(
             gameId.Value,
             () => _client.GetHeroesAsync(gameId.Value, ct),
             Path.Combine(gridPath, $"{appId}_hero.png"),
-            "hero", progress, ct);
+            "hero", progress, ct,
+            steamAppId != null ? $"https://cdn.akamai.steamstatic.com/steam/apps/{steamAppId.Value}/library_hero.jpg" : null);
 
         // Download logo
         anyDownloaded |= await DownloadFirstImageAsync(
             gameId.Value,
             () => _client.GetLogosAsync(gameId.Value, ct),
             Path.Combine(gridPath, $"{appId}_logo.png"),
-            "logo", progress, ct);
+            "logo", progress, ct,
+            steamAppId != null ? $"https://cdn.akamai.steamstatic.com/steam/apps/{steamAppId.Value}/logo.png" : null);
 
         // Download icon
         anyDownloaded |= await DownloadFirstImageAsync(
@@ -201,7 +253,7 @@ public class ArtworkManager
     }
 
     /// <summary>
-    /// Downloads the first (highest-scored) non-NSFW image from a list.
+    /// Downloads the first (highest-scored) non-NSFW image from a list, with an optional Steam CDN fallback.
     /// </summary>
     private async Task<bool> DownloadFirstImageAsync(
         int gameId,
@@ -209,7 +261,8 @@ public class ArtworkManager
         string savePath,
         string typeName,
         IProgress<string>? progress,
-        CancellationToken ct)
+        CancellationToken ct,
+        string? steamCdnFallbackUrl = null)
     {
         try
         {
@@ -219,23 +272,44 @@ public class ArtworkManager
                 .OrderByDescending(i => i.Score)
                 .FirstOrDefault();
 
-            if (best == null)
+            if (best != null)
             {
-                _logger.Log("Artwork", $"No suitable {typeName} found for SteamGridDB ID {gameId}");
-                return false;
+                progress?.Report($"Downloading {typeName}...");
+                var data = await _client.DownloadImageAsync(best.Url, ct);
+                await File.WriteAllBytesAsync(savePath, data, ct);
+                _logger.Log("Artwork", $"Downloaded {typeName} → {savePath} ({data.Length:N0} bytes)");
+                return true;
             }
-
-            progress?.Report($"Downloading {typeName}...");
-            var data = await _client.DownloadImageAsync(best.Url, ct);
-            await File.WriteAllBytesAsync(savePath, data, ct);
-            _logger.Log("Artwork", $"Downloaded {typeName} → {savePath} ({data.Length:N0} bytes)");
-            return true;
+            
+            _logger.Log("Artwork", $"No suitable {typeName} found for SteamGridDB ID {gameId}");
         }
         catch (Exception ex)
         {
             _logger.LogError("Artwork", $"Failed to download {typeName} for SteamGridDB ID {gameId}", ex);
-            return false;
         }
+
+        // Fallback to Steam CDN if provided
+        if (!string.IsNullOrWhiteSpace(steamCdnFallbackUrl))
+        {
+            try
+            {
+                _logger.Log("Artwork", $"Fallback: Downloading {typeName} from Steam CDN...");
+                progress?.Report($"Downloading {typeName} (Steam Fallback)...");
+                
+                using var http = new HttpClient();
+                var fallbackData = await http.GetByteArrayAsync(steamCdnFallbackUrl, ct);
+                await File.WriteAllBytesAsync(savePath, fallbackData, ct);
+                
+                _logger.Log("Artwork", $"Downloaded {typeName} (Fallback) → {savePath} ({fallbackData.Length:N0} bytes)");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Artwork", $"Steam CDN fallback failed for {typeName}", ex);
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

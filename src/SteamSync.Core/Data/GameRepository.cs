@@ -93,9 +93,9 @@ public class GameRepository
         using var cmd = _db.Connection.CreateCommand();
         cmd.CommandText = @"
             INSERT INTO Games (Title, Platform, IsOwned, IsInstalled, ExePath, StartDir, LaunchArguments,
-                               SteamAppId, SteamGridDbId, ArtworkCached, IconPath, LastSynced, IsVR)
+                               SteamAppId, SteamGridDbId, ArtworkCached, IconPath, LastSynced, IsVR, OfficialSteamAppId)
             VALUES (@Title, @Platform, @IsOwned, @IsInstalled, @ExePath, @StartDir, @LaunchArguments,
-                    @SteamAppId, @SteamGridDbId, @ArtworkCached, @IconPath, @LastSynced, @IsVR);
+                    @SteamAppId, @SteamGridDbId, @ArtworkCached, @IconPath, @LastSynced, @IsVR, @OfficialSteamAppId);
             SELECT last_insert_rowid();";
 
         AddParameters(cmd, game);
@@ -113,7 +113,7 @@ public class GameRepository
                 Title = @Title, Platform = @Platform, IsOwned = @IsOwned, IsInstalled = @IsInstalled,
                 ExePath = @ExePath, StartDir = @StartDir, LaunchArguments = @LaunchArguments,
                 SteamAppId = @SteamAppId, SteamGridDbId = @SteamGridDbId, ArtworkCached = @ArtworkCached,
-                IconPath = @IconPath, LastSynced = @LastSynced, IsVR = @IsVR, UpdatedAt = datetime('now')
+                IconPath = @IconPath, LastSynced = @LastSynced, IsVR = @IsVR, OfficialSteamAppId = @OfficialSteamAppId, UpdatedAt = datetime('now')
             WHERE Id = @Id";
 
         cmd.Parameters.AddWithValue("@Id", game.Id);
@@ -168,6 +168,7 @@ public class GameRepository
         cmd.Parameters.AddWithValue("@IconPath", (object?)game.IconPath ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@LastSynced", (object?)game.LastSynced?.ToString("o") ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@IsVR", game.IsVR ? 1 : 0);
+        cmd.Parameters.AddWithValue("@OfficialSteamAppId", (object?)game.OfficialSteamAppId ?? DBNull.Value);
     }
 
     private static List<DetectedGame> ReadGames(SqliteCommand cmd)
@@ -193,6 +194,7 @@ public class GameRepository
                 IconPath = reader.IsDBNull(reader.GetOrdinal("IconPath")) ? null : reader.GetString(reader.GetOrdinal("IconPath")),
                 LastSynced = reader.IsDBNull(reader.GetOrdinal("LastSynced")) ? null : DateTime.Parse(reader.GetString(reader.GetOrdinal("LastSynced"))),
                 IsVR = reader.GetInt32(reader.GetOrdinal("IsVR")) != 0,
+                OfficialSteamAppId = reader.IsDBNull(reader.GetOrdinal("OfficialSteamAppId")) ? null : (uint)reader.GetInt64(reader.GetOrdinal("OfficialSteamAppId"))
             });
         }
 

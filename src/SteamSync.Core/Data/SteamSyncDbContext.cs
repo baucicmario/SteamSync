@@ -39,7 +39,8 @@ public class SteamSyncDbContext : IDisposable
                 LastSynced TEXT,
                 CreatedAt TEXT NOT NULL DEFAULT (datetime('now')),
                 UpdatedAt TEXT NOT NULL DEFAULT (datetime('now')),
-                IsVR INTEGER NOT NULL DEFAULT 0
+                IsVR INTEGER NOT NULL DEFAULT 0,
+                OfficialSteamAppId INTEGER
             );
 
             CREATE INDEX IF NOT EXISTS IX_Games_Title ON Games(Title);
@@ -51,6 +52,16 @@ public class SteamSyncDbContext : IDisposable
         try
         {
             cmd.CommandText = "ALTER TABLE Games ADD COLUMN IsVR INTEGER NOT NULL DEFAULT 0;";
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqliteException)
+        {
+            // Column already exists
+        }
+
+        try
+        {
+            cmd.CommandText = "ALTER TABLE Games ADD COLUMN OfficialSteamAppId INTEGER;";
             cmd.ExecuteNonQuery();
         }
         catch (SqliteException)
