@@ -33,15 +33,16 @@ public class UninstalledImageProcessor
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "SteamSync/1.0 (https://github.com/baucicmario/SteamSync)");
     }
 
-    public async Task ProcessUninstalledGamesAsync(IProgress<string>? progress = null, IProgress<double>? percentageProgress = null, CancellationToken ct = default)
+    public async Task<List<DetectedGame>> ProcessUninstalledGamesAsync(IProgress<string>? progress = null, IProgress<double>? percentageProgress = null, CancellationToken ct = default)
     {
+        var dummyGamesToSync = new List<DetectedGame>();
         var uninstalledGames = _gameRepo.GetUninstalledOwnedGames();
         if (!uninstalledGames.Any())
         {
             _logger.Log("UninstalledImageProcessor", "No uninstalled owned games found. Skipping image processing.");
             progress?.Report("No uninstalled games to process.");
             percentageProgress?.Report(100);
-            return;
+            return dummyGamesToSync;
         }
 
         progress?.Report($"Processing artwork for {uninstalledGames.Count} uninstalled games...");
@@ -63,6 +64,44 @@ public class UninstalledImageProcessor
             try
             {
                 await ProcessGameArtworkAsync(game, cacheDir, null, ct);
+                
+                if (game.Platform == "BattleNet" || game.Platform == "Battle.net")
+                {
+                    var gameUid = game.LaunchArguments?.Replace("battlenet://launch/", "") ?? Utilities.TitleSanitizer.Sanitize(game.Title);
+                    var generator = new Steam.BattleNetExecutableGenerator(_logger);
+                    var exeDir = Path.Combine(cacheDir, "Executables", "BattleNet");
+                    var exePath = Path.Combine(exeDir, $"{gameUid}.exe");
+                    
+                    if (generator.GenerateExecutable(gameUid, exePath))
+                    {
+                        var oldAppId = game.SteamAppId != 0 
+                            ? game.SteamAppId 
+                            : Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath ?? game.Title, game.Title);
+
+                        // Set up the dummy game properties for Steam injection
+                        game.ExePath = exePath;
+                        game.IsInstalled = true; // Required by the injector
+                        
+                        var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
+                        game.SteamAppId = newAppId;
+                        
+                        var userIds = Steam.SteamPathResolver.GetUserIds();
+                        foreach(var userId in userIds)
+                        {
+                            var gridPath = Steam.SteamPathResolver.GetGridPath(userId);
+                            if (gridPath != null)
+                            {
+                                var platformDir = Path.Combine(cacheDir, game.Platform);
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}p.png"), Path.Combine(gridPath, $"{newAppId}p.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}.png"), Path.Combine(gridPath, $"{newAppId}.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_hero.png"), Path.Combine(gridPath, $"{newAppId}_hero.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_logo.png"), Path.Combine(gridPath, $"{newAppId}_logo.png"));
+                            }
+                        }
+                        
+                        dummyGamesToSync.Add(game);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -72,6 +111,19 @@ public class UninstalledImageProcessor
         
         progress?.Report("Finished processing uninstalled games artwork.");
         percentageProgress?.Report(100);
+        return dummyGamesToSync;
+    }
+    
+    private void CopyIfExist(string source, string dest)
+    {
+        if (File.Exists(source))
+        {
+            try
+            {
+                File.Copy(source, dest, true);
+            }
+            catch { }
+        }
     }
 
     private async Task ProcessGameArtworkAsync(DetectedGame game, string cacheDir, IProgress<string>? progress, CancellationToken ct)
