@@ -7,7 +7,12 @@ namespace SteamSync.Core.Detection;
 
 /// <summary>
 /// Detects installed Xbox / Windows Store games using PowerShell (Get-AppxPackage).
-/// Note: Due to Xbox app limitations, offline detection of uninstalled owned games is not possible.
+/// 
+/// Note: Due to Xbox app limitations, offline detection of uninstalled owned games is not possible. 
+/// The Xbox app does not maintain a local, human-readable database of a user's library.
+/// Entitlements for uninstalled games are queried dynamically from Microsoft's servers via internal authenticated APIs, 
+/// which cannot be accessed offline or easily replicated without an online OAuth flow.
+/// Therefore, this detector is strictly limited to locally installed Appx/MSIXVC packages.
 /// </summary>
 public class XboxDetector : IGameDetector
 {
