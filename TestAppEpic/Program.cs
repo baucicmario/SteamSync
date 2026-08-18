@@ -1,26 +1,22 @@
 using System;
-using System.IO;
-using System.Text.RegularExpressions;
-using SteamSync.Core.Logging;
-using SteamSync.Core.Steam;
-using SteamSync.Core.Utilities;
+using System.Threading.Tasks;
+using SteamSync.Core.Detection;
 
 class Program
 {
-    static void Main()
+    static async Task Main()
     {
-        var titles = new[] { "Hogwarts Legacy", "Maneater", "World War Z", "Axiom Verge", "Close to the Sun" };
-        var logger = new SyncLogger();
-        var generator = new EpicExecutableGenerator(logger);
-
-        foreach (var title in titles)
+        var detector = new EpicGamesDetector();
+        var games = await detector.DetectGamesAsync();
+        Console.WriteLine($"Total Epic Games detected by detector: {games.Count}");
+        
+        foreach (var g in games)
         {
-            var sanitized = TitleSanitizer.Sanitize(title);
-            var slug = Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
-            var outPath = Path.Combine(AppContext.BaseDirectory, "test_out", $"{slug}.exe");
-            
-            bool success = generator.GenerateExecutable(slug, outPath);
-            Console.WriteLine($"Generated for '{title}' (slug: '{slug}') -> {success} at {outPath}");
+            if (g.Title.Contains("Twinmotion") || g.Title.Contains("Reality") || g.Title.Contains("DLC") || g.Title.Contains("Soundtrack") || g.Title.Contains("Art Book"))
+            {
+                Console.WriteLine($"WARNING: Unexpected non-game/DLC detected: {g.Title}");
+            }
         }
+        Console.WriteLine("Done checking!");
     }
 }
