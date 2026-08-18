@@ -37,6 +37,9 @@ public partial class SettingsViewModel : ViewModelBase
     private bool _detectRockstar = true;
 
     [ObservableProperty]
+    private bool _detectXbox = true;
+
+    [ObservableProperty]
     private ObservableCollection<string> _customScanDirectories = new();
 
     [ObservableProperty]
@@ -69,6 +72,7 @@ public partial class SettingsViewModel : ViewModelBase
                     DetectEa = settings.DetectEa;
                     DetectBattleNet = settings.DetectBattleNet;
                     DetectRockstar = settings.DetectRockstar;
+                    DetectXbox = settings.DetectXbox;
                     CustomScanDirectories = new ObservableCollection<string>(settings.CustomScanDirectories);
                 }
             }
@@ -93,6 +97,7 @@ public partial class SettingsViewModel : ViewModelBase
                 DetectEa = DetectEa,
                 DetectBattleNet = DetectBattleNet,
                 DetectRockstar = DetectRockstar,
+                DetectXbox = DetectXbox,
                 CustomScanDirectories = CustomScanDirectories.ToList(),
                 UsePlayniteWorker = false // Disabled per architecture change
             };

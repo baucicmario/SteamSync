@@ -29,6 +29,9 @@ public class AppSettings
     /// <summary>Whether to auto-detect Rockstar Games Launcher installations.</summary>
     public bool DetectRockstar { get; set; } = true;
 
+    /// <summary>Whether to auto-detect Xbox / Windows Store games (installed only).</summary>
+    public bool DetectXbox { get; set; } = true;
+
     /// <summary>Whether to use the Playnite worker for detection (fallback).</summary>
     public bool UsePlayniteWorker { get; set; } = false;
 
