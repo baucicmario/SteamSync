@@ -60,6 +60,7 @@ public class GogDetector : IGameDetector
                             IsInstalled = !string.IsNullOrWhiteSpace(path) && Directory.Exists(path),
                             ExePath = exePath,
                             StartDir = path,
+                            LaunchArguments = subKeyName,
                         };
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
@@ -125,6 +126,7 @@ public class GogDetector : IGameDetector
                                     IsInstalled = false,
                                     ExePath = null,
                                     StartDir = null,
+                                    LaunchArguments = gameId,
                                 };
                             }
                         }

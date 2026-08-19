@@ -65,7 +65,7 @@ public class UninstalledImageProcessor
             {
                 await ProcessGameArtworkAsync(game, cacheDir, null, ct);
                 
-                if (game.Platform == "BattleNet" || game.Platform == "Battle.net" || game.Platform == "Epic")
+                if (game.Platform == "BattleNet" || game.Platform == "Battle.net" || game.Platform == "Epic" || game.Platform == "GOG" || game.Platform == "Gog")
                 {
                     bool generated = false;
                     string exePath = string.Empty;
@@ -97,6 +97,20 @@ public class UninstalledImageProcessor
                         var exeDir = Path.Combine(cacheDir, "Executables", "Epic");
                         exePath = Path.Combine(exeDir, $"{exeName}.exe");
                         generated = generator.GenerateExecutable(storeSlug, exePath);
+                    }
+                    else if (game.Platform == "GOG" || game.Platform == "Gog")
+                    {
+                        var gameId = game.LaunchArguments;
+                        if (!string.IsNullOrWhiteSpace(gameId))
+                        {
+                            gameId = gameId.Replace("goggalaxy://openGameView/", "").Trim('/');
+                        }
+
+                        var exeName = !string.IsNullOrWhiteSpace(gameId) ? gameId : Utilities.TitleSanitizer.Sanitize(game.Title);
+                        var generator = new Steam.GogExecutableGenerator(_logger);
+                        var exeDir = Path.Combine(cacheDir, "Executables", "GOG");
+                        exePath = Path.Combine(exeDir, $"{exeName}.exe");
+                        generated = generator.GenerateExecutable(gameId ?? exeName, exePath);
                     }
                     
                     if (generated)
