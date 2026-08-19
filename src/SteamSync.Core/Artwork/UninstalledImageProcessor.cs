@@ -72,11 +72,53 @@ public class UninstalledImageProcessor
                     
                     if (game.Platform == "BattleNet" || game.Platform == "Battle.net")
                     {
-                        var gameUid = game.LaunchArguments?.Replace("battlenet://launch/", "") ?? Utilities.TitleSanitizer.Sanitize(game.Title);
-                        var generator = new Steam.BattleNetExecutableGenerator(_logger);
-                        var exeDir = Path.Combine(cacheDir, "Executables", "BattleNet");
-                        exePath = Path.Combine(exeDir, $"{gameUid}.exe");
-                        generated = generator.GenerateExecutable(gameUid, exePath);
+                        var gameUid = game.LaunchArguments;
+                        if (!string.IsNullOrWhiteSpace(gameUid))
+                        {
+                            var match = System.Text.RegularExpressions.Regex.Match(gameUid, @"(?:battlenet://launch/|--game=)([^&/\s""]+)");
+                            if (match.Success)
+                            {
+                                gameUid = match.Groups[1].Value;
+                            }
+                            else
+                            {
+                                gameUid = gameUid.Replace("battlenet://launch/", "").Trim('/');
+                            }
+                        }
+                        if (string.IsNullOrWhiteSpace(gameUid))
+                        {
+                            gameUid = Utilities.TitleSanitizer.Sanitize(game.Title);
+                        }
+
+                        var launcherPath = Detection.BattleNetDetector.GetBattleNetLauncherPath();
+
+                        var oldAppId = game.SteamAppId != 0 
+                            ? game.SteamAppId 
+                            : Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath ?? game.Title, game.Title);
+
+                        game.ExePath = launcherPath;
+                        game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
+                        game.LaunchArguments = $"--game={gameUid}";
+                        game.IsInstalled = true; // Required by the injector
+
+                        var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
+                        game.SteamAppId = newAppId;
+
+                        var userIds = Steam.SteamPathResolver.GetUserIds();
+                        foreach (var userId in userIds)
+                        {
+                            var gridPath = Steam.SteamPathResolver.GetGridPath(userId);
+                            if (gridPath != null)
+                            {
+                                var platformDir = Path.Combine(cacheDir, game.Platform);
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}p.png"), Path.Combine(gridPath, $"{newAppId}p.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}.png"), Path.Combine(gridPath, $"{newAppId}.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_hero.png"), Path.Combine(gridPath, $"{newAppId}_hero.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_logo.png"), Path.Combine(gridPath, $"{newAppId}_logo.png"));
+                            }
+                        }
+
+                        dummyGamesToSync.Add(game);
                     }
                     else if (game.Platform == "Epic")
                     {

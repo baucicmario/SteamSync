@@ -887,6 +887,58 @@ public class BattleNetDetector : IGameDetector
             return null;
         }
     }
+
+    /// <summary>
+    /// Resolves the installed Battle.net launcher executable path,
+    /// checking registry and standard installation locations with explorer.exe fallback.
+    /// </summary>
+    public static string GetBattleNetLauncherPath()
+    {
+        try
+        {
+            var uninstallPaths = new[]
+            {
+                @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Battle.net",
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Battle.net"
+            };
+
+            foreach (var subKey in uninstallPaths)
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(subKey);
+                if (key != null)
+                {
+                    var installLocation = key.GetValue("InstallLocation") as string;
+                    if (!string.IsNullOrWhiteSpace(installLocation) && Directory.Exists(installLocation))
+                    {
+                        var bnetExe = Path.Combine(installLocation, "Battle.net.exe");
+                        if (File.Exists(bnetExe)) return bnetExe;
+                    }
+
+                    var displayIcon = key.GetValue("DisplayIcon") as string;
+                    var iconExe = displayIcon?.Split(',').FirstOrDefault()?.Trim('"');
+                    if (!string.IsNullOrWhiteSpace(iconExe) && File.Exists(iconExe))
+                        return iconExe;
+                }
+            }
+        }
+        catch { }
+
+        var defaultPaths = new[]
+        {
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Battle.net", "Battle.net.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Battle.net", "Battle.net.exe"),
+        };
+
+        foreach (var path in defaultPaths)
+        {
+            if (File.Exists(path)) return path;
+        }
+
+        var explorerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+        if (File.Exists(explorerPath)) return explorerPath;
+
+        return "explorer.exe";
+    }
 }
 
 [ProtoContract]

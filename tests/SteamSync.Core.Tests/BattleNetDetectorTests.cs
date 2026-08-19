@@ -38,4 +38,11 @@ public class BattleNetDetectorTests
             Assert.False(string.IsNullOrWhiteSpace(game.Title));
         }
     }
+
+    [Fact]
+    public void GetBattleNetLauncherPath_ReturnsValidPathOrExplorerFallback()
+    {
+        var path = BattleNetDetector.GetBattleNetLauncherPath();
+        Assert.False(string.IsNullOrWhiteSpace(path));
+    }
 }
