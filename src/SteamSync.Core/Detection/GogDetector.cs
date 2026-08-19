@@ -145,4 +145,52 @@ public class GogDetector : IGameDetector
 
         return gamesMap.Values.ToList();
     }
+
+    /// <summary>
+    /// Resolves the installed GOG Galaxy launcher executable path,
+    /// checking registry and standard installation locations with explorer.exe fallback.
+    /// </summary>
+    public static string GetGogLauncherPath()
+    {
+        try
+        {
+            var registryPaths = new[]
+            {
+                (Registry.LocalMachine, @"SOFTWARE\WOW6432Node\GOG.com\GalaxyClient\paths"),
+                (Registry.LocalMachine, @"SOFTWARE\GOG.com\GalaxyClient\paths"),
+                (Registry.CurrentUser, @"Software\GOG.com\GalaxyClient\paths"),
+            };
+
+            foreach (var (rootKey, regPath) in registryPaths)
+            {
+                using var key = rootKey.OpenSubKey(regPath);
+                if (key != null)
+                {
+                    var clientDir = key.GetValue("client") as string;
+                    if (!string.IsNullOrWhiteSpace(clientDir) && Directory.Exists(clientDir))
+                    {
+                        var galaxyExe = Path.Combine(clientDir, "GalaxyClient.exe");
+                        if (File.Exists(galaxyExe)) return galaxyExe;
+                    }
+                }
+            }
+        }
+        catch { }
+
+        var defaultPaths = new[]
+        {
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GOG Galaxy", "GalaxyClient.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GOG Galaxy", "GalaxyClient.exe"),
+        };
+
+        foreach (var path in defaultPaths)
+        {
+            if (File.Exists(path)) return path;
+        }
+
+        var explorerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+        if (File.Exists(explorerPath)) return explorerPath;
+
+        return "explorer.exe";
+    }
 }

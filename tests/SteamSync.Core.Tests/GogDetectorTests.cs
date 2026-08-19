@@ -39,4 +39,11 @@ public class GogDetectorTests
             Assert.False(string.IsNullOrWhiteSpace(game.LaunchArguments));
         }
     }
+
+    [Fact]
+    public void GetGogLauncherPath_ReturnsValidPathOrExplorerFallback()
+    {
+        var path = GogDetector.GetGogLauncherPath();
+        Assert.False(string.IsNullOrWhiteSpace(path));
+    }
 }

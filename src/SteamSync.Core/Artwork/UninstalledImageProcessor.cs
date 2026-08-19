@@ -147,12 +147,42 @@ public class UninstalledImageProcessor
                         {
                             gameId = gameId.Replace("goggalaxy://openGameView/", "").Trim('/');
                         }
+                        if (string.IsNullOrWhiteSpace(gameId))
+                        {
+                            gameId = Utilities.TitleSanitizer.Sanitize(game.Title);
+                        }
 
-                        var exeName = !string.IsNullOrWhiteSpace(gameId) ? gameId : Utilities.TitleSanitizer.Sanitize(game.Title);
-                        var generator = new Steam.GogExecutableGenerator(_logger);
-                        var exeDir = Path.Combine(cacheDir, "Executables", "GOG");
-                        exePath = Path.Combine(exeDir, $"{exeName}.exe");
-                        generated = generator.GenerateExecutable(gameId ?? exeName, exePath);
+                        var launcherPath = Detection.GogDetector.GetGogLauncherPath();
+
+                        var oldAppId = game.SteamAppId != 0 
+                            ? game.SteamAppId 
+                            : Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath ?? game.Title, game.Title);
+
+                        game.ExePath = launcherPath;
+                        game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
+                        game.LaunchArguments = launcherPath.EndsWith("GalaxyClient.exe", StringComparison.OrdinalIgnoreCase)
+                            ? $"/command=installGame /gameId={gameId}"
+                            : $"\"goggalaxy://openGameView/{gameId}\"";
+                        game.IsInstalled = true; // Required by the injector
+
+                        var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
+                        game.SteamAppId = newAppId;
+
+                        var userIds = Steam.SteamPathResolver.GetUserIds();
+                        foreach (var userId in userIds)
+                        {
+                            var gridPath = Steam.SteamPathResolver.GetGridPath(userId);
+                            if (gridPath != null)
+                            {
+                                var platformDir = Path.Combine(cacheDir, game.Platform);
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}p.png"), Path.Combine(gridPath, $"{newAppId}p.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}.png"), Path.Combine(gridPath, $"{newAppId}.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_hero.png"), Path.Combine(gridPath, $"{newAppId}_hero.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_logo.png"), Path.Combine(gridPath, $"{newAppId}_logo.png"));
+                            }
+                        }
+
+                        dummyGamesToSync.Add(game);
                     }
                     else if (game.Platform == "Ubisoft" || game.Platform == "Ubisoft Connect" || game.Platform == "Uplay")
                     {
