@@ -65,7 +65,7 @@ public class UninstalledImageProcessor
             {
                 await ProcessGameArtworkAsync(game, cacheDir, null, ct);
                 
-                if (game.Platform == "BattleNet" || game.Platform == "Battle.net" || game.Platform == "Epic" || game.Platform == "GOG" || game.Platform == "Gog" || game.Platform == "Ubisoft" || game.Platform == "Ubisoft Connect" || game.Platform == "Uplay")
+                if (game.Platform == "BattleNet" || game.Platform == "Battle.net" || game.Platform == "Epic" || game.Platform == "GOG" || game.Platform == "Gog" || game.Platform == "Ubisoft" || game.Platform == "Ubisoft Connect" || game.Platform == "Uplay" || game.Platform == "EA" || game.Platform == "EA App" || game.Platform == "Origin")
                 {
                     bool generated = false;
                     string exePath = string.Empty;
@@ -133,6 +133,53 @@ public class UninstalledImageProcessor
                         var exeDir = Path.Combine(cacheDir, "Executables", "Ubisoft");
                         exePath = Path.Combine(exeDir, $"{exeName}.exe");
                         generated = generator.GenerateExecutable(gameId ?? exeName, exePath);
+                    }
+                    else if (game.Platform == "EA" || game.Platform == "EA App" || game.Platform == "Origin")
+                    {
+                        var offerId = game.LaunchArguments;
+                        if (!string.IsNullOrWhiteSpace(offerId))
+                        {
+                            var match = System.Text.RegularExpressions.Regex.Match(offerId, @"(?:offerIds?=|ea://launch/)([^&]+)");
+                            if (match.Success)
+                            {
+                                offerId = match.Groups[1].Value;
+                            }
+                            else if (offerId.StartsWith("origin2://", StringComparison.OrdinalIgnoreCase) || offerId.StartsWith("ea://", StringComparison.OrdinalIgnoreCase))
+                            {
+                                offerId = offerId.Split(new[] { '=', '/' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+                            }
+                        }
+
+                        var contentId = Detection.EaContentIdResolver.ResolveContentId(offerId);
+                        var launcherPath = Detection.EaContentIdResolver.GetEaLauncherPath();
+
+                        var oldAppId = game.SteamAppId != 0 
+                            ? game.SteamAppId 
+                            : Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath ?? game.Title, game.Title);
+
+                        game.ExePath = launcherPath;
+                        game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
+                        game.LaunchArguments = $"\"origin2://game/launch/?offerIds={contentId}\"";
+                        game.IsInstalled = true; // Required by the injector
+
+                        var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
+                        game.SteamAppId = newAppId;
+
+                        var userIds = Steam.SteamPathResolver.GetUserIds();
+                        foreach (var userId in userIds)
+                        {
+                            var gridPath = Steam.SteamPathResolver.GetGridPath(userId);
+                            if (gridPath != null)
+                            {
+                                var platformDir = Path.Combine(cacheDir, game.Platform);
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}p.png"), Path.Combine(gridPath, $"{newAppId}p.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}.png"), Path.Combine(gridPath, $"{newAppId}.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_hero.png"), Path.Combine(gridPath, $"{newAppId}_hero.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_logo.png"), Path.Combine(gridPath, $"{newAppId}_logo.png"));
+                            }
+                        }
+
+                        dummyGamesToSync.Add(game);
                     }
                     
                     if (generated)

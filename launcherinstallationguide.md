@@ -33,14 +33,13 @@ When implementing the ID resolution and path detection logic for the following c
 *   **Required Identifiers:**
     *   `GameID` (A specific numerical ID assigned to the Ubisoft title, e.g., 4 for Assassin's Creed 2).
 
-## 4. EA App (Formerly Origin) - Not Functioning
-*   **Execution Method:** URI Protocol
-*   **Protocol Scheme:** `ea://` (or legacy `origin2://`)
-*   **Installation Command:** `ea://launch/{OfferID}` (Note: Launching an uninstalled game ID in the EA app typically defaults to triggering the install prompt).
-    *   *Fallback Legacy Method:* `origin2://game/download?offerId={OfferID}` (may redirect through the EA App compatibility layer).
-*   **Behavior:** Focuses the EA App and brings up the game hub or immediate installation modal.
+## 4. EA App (Formerly Origin) - Tested Works
+*   **Execution Method:** URI Protocol / CLI Executable
+*   **Protocol Scheme:** `origin2://` (or `link2ea://`)
+*   **Installation / Launch Command:** `origin2://game/launch/?offerIds={OfferID}` OR `"<PathToEA>\EALauncher.exe" "origin2://game/launch/?offerIds={OfferID}"`
+*   **Behavior:** The EA App registers the `origin2://` protocol handler to `EALauncher.exe`. Calling `origin2://game/launch/?offerIds={OfferID}` for an uninstalled game opens the EA App and triggers the native dialog: *"Game not installed: Go to your library to double-check [Game Title] is installed properly... [GET THE GAME] [CLOSE]"*. Clicking **[GET THE GAME]** starts the installation / download prompt directly in the EA App.
 *   **Required Identifiers:**
-    *   `OfferID` (A complex string identifier unique to the EA catalog).
+    *   `OfferID` (e.g., `70619` for Battlefield 3, `Origin.OFR.50.0002694`, or numeric Content ID).
 
 ## 5. Battle.net - Tested Works
 *   **Execution Method:** Command-line executable argument
@@ -85,8 +84,12 @@ When implementing the ID resolution and path detection logic for the following c
 ### Ubisoft Connect
 *   **Install Game (Anno 1602):** `uplay://install/2990`
 
-### EA App (Origin) - Not Functioning
-*   **Launch / Install Game (Apex Legends):** `ea://launch/Origin.OFR.50.0002694` (Note: Fails if EA App registry keys are broken/missing)
+### EA App (Origin) - Tested Works
+*   **Launch / Install Game (Apex Legends) - URI Example:** `origin2://game/launch?offerIds=Origin.OFR.50.0002694&autoDownload=1`
+*   **Launch / Install Game (Apex Legends) - Dynamic PowerShell Example:**
+    ```powershell
+    $eaPath = (Get-ItemProperty "HKLM:\SOFTWARE\WOW6432Node\Electronic Arts\EA Desktop").LauncherAppPath; Start-Process $eaPath -ArgumentList "`"origin2://game/launch?offerIds=Origin.OFR.50.0002694&autoDownload=1`""
+    ```
 
 ### Battle.net
 *   **Focus Game Page (Call of Duty: Modern Warfare) - Dynamic PowerShell Example:**

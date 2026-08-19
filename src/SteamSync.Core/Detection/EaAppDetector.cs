@@ -613,15 +613,17 @@ public class EaAppDetector : IGameDetector
                 if (!string.IsNullOrWhiteSpace(exePath)) existing.ExePath = exePath;
                 if (!string.IsNullOrWhiteSpace(installDir)) existing.StartDir = installDir;
             }
+            var resolvedId = EaContentIdResolver.ResolveContentId(id);
             if (string.IsNullOrWhiteSpace(existing.LaunchArguments))
             {
-                existing.LaunchArguments = $"origin2://game/launch?offerIds={id}";
+                existing.LaunchArguments = $"origin2://game/launch/?offerIds={resolvedId}";
             }
             gamesMap[id] = existing;
             gamesMap[title] = existing;
             return;
         }
 
+        var contentId = EaContentIdResolver.ResolveContentId(id);
         var detected = new DetectedGame
         {
             Title = title,
@@ -630,7 +632,7 @@ public class EaAppDetector : IGameDetector
             IsInstalled = isInstalled,
             ExePath = exePath,
             StartDir = installDir,
-            LaunchArguments = $"origin2://game/launch?offerIds={id}",
+            LaunchArguments = $"origin2://game/launch/?offerIds={contentId}",
         };
 
         gamesMap[id] = detected;
