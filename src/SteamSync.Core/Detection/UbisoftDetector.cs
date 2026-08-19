@@ -208,6 +208,61 @@ public class UbisoftDetector : IGameDetector
     }
 
     /// <summary>
+    /// Resolves the installed Ubisoft Connect launcher executable path,
+    /// checking registry and standard installation locations with explorer.exe fallback.
+    /// </summary>
+    public static string GetUbisoftLauncherPath()
+    {
+        try
+        {
+            var registryPaths = new[]
+            {
+                @"SOFTWARE\WOW6432Node\Ubisoft\Launcher",
+                @"SOFTWARE\Ubisoft\Launcher"
+            };
+
+            foreach (var regPath in registryPaths)
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(regPath);
+                if (key != null)
+                {
+                    var installDir = key.GetValue("InstallDir") as string;
+                    if (!string.IsNullOrWhiteSpace(installDir) && Directory.Exists(installDir))
+                    {
+                        var connectExe = Path.Combine(installDir, "UbisoftConnect.exe");
+                        if (File.Exists(connectExe)) return connectExe;
+
+                        var upcExe = Path.Combine(installDir, "upc.exe");
+                        if (File.Exists(upcExe)) return upcExe;
+
+                        var launcherExe = Path.Combine(installDir, "UbisoftGameLauncher.exe");
+                        if (File.Exists(launcherExe)) return launcherExe;
+                    }
+                }
+            }
+        }
+        catch { }
+
+        var defaultPaths = new[]
+        {
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Ubisoft", "Ubisoft Game Launcher", "UbisoftConnect.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Ubisoft", "Ubisoft Game Launcher", "UbisoftConnect.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Ubisoft", "Ubisoft Game Launcher", "upc.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Ubisoft", "Ubisoft Game Launcher", "upc.exe"),
+        };
+
+        foreach (var path in defaultPaths)
+        {
+            if (File.Exists(path)) return path;
+        }
+
+        var explorerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+        if (File.Exists(explorerPath)) return explorerPath;
+
+        return "explorer.exe";
+    }
+
+    /// <summary>
     /// Finds the most likely main game executable in a directory,
     /// filtering out known non-game executables.
     /// </summary>

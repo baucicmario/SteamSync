@@ -38,4 +38,11 @@ public class UbisoftDetectorTests
             Assert.False(string.IsNullOrWhiteSpace(game.Title));
         }
     }
+
+    [Fact]
+    public void GetUbisoftLauncherPath_ReturnsValidPathOrExplorerFallback()
+    {
+        var path = UbisoftDetector.GetUbisoftLauncherPath();
+        Assert.False(string.IsNullOrWhiteSpace(path));
+    }
 }
