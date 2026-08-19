@@ -160,9 +160,7 @@ public class UninstalledImageProcessor
 
                         game.ExePath = launcherPath;
                         game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
-                        game.LaunchArguments = launcherPath.EndsWith("GalaxyClient.exe", StringComparison.OrdinalIgnoreCase)
-                            ? $"/command=installGame /gameId={gameId}"
-                            : $"\"goggalaxy://openGameView/{gameId}\"";
+                        game.LaunchArguments = $"\"goggalaxy://openGameView/{gameId}\"";
                         game.IsInstalled = true; // Required by the injector
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
