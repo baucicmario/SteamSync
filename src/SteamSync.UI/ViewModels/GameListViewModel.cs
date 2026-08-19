@@ -360,7 +360,8 @@ public partial class GameListViewModel : ViewModelBase
             StatusMessage = "Processing uninstalled games artwork...";
             var uninstalledProgress = new Progress<string>(msg => StatusMessage = $"Uninstalled: {msg}");
             var uninstalledPercentage = new Progress<double>(pct => SyncProgress = 55 + (pct / 100 * 5));
-            await _uninstalledImageProcessor.ProcessUninstalledGamesAsync(uninstalledProgress, uninstalledPercentage);
+            var dummyGames = await _uninstalledImageProcessor.ProcessUninstalledGamesAsync(uninstalledProgress, uninstalledPercentage);
+            selectedGames.AddRange(dummyGames);
 
             SyncProgress = 60;
             StatusMessage = forceRestart ? "Force syncing Steam shortcuts..." : "Syncing Steam shortcuts...";

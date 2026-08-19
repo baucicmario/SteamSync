@@ -1,28 +1,38 @@
 using System;
-using System.Threading.Tasks;
-using SteamSync.Core.Models;
-using SteamSync.Core.Logging;
-using SteamSync.Core.Utilities;
+using System.IO;
+using System.Text.Json;
+using System.Linq;
 
 class Program
 {
-    static async Task Main()
+    static void Main()
     {
-        var logger = new SyncLogger();
-        
-        Console.WriteLine("Testing Borderlands 2 (Should be false)...");
-        var bl2 = new DetectedGame { Title = "Borderlands 2" };
-        var isVrBl2 = await VrDetectionUtility.IsVrGameAsync(bl2, logger);
-        Console.WriteLine($"Result: {isVrBl2}");
-
-        Console.WriteLine("\nTesting Half-Life: Alyx (Should be true)...");
-        var hla = new DetectedGame { Title = "Half-Life: Alyx" };
-        var isVrHla = await VrDetectionUtility.IsVrGameAsync(hla, logger);
-        Console.WriteLine($"Result: {isVrHla}");
-
-        Console.WriteLine("\nTesting VRChat (Should be true)...");
-        var vrchat = new DetectedGame { Title = "VRChat" };
-        var isVrVrc = await VrDetectionUtility.IsVrGameAsync(vrchat, logger);
-        Console.WriteLine($"Result: {isVrVrc}");
+        var path = @"C:\ProgramData\Epic\EpicGamesLauncher\Data\Catalog\catcache.bin";
+        if (File.Exists(path))
+        {
+            var base64 = File.ReadAllText(path);
+            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(base64));
+            using var doc = JsonDocument.Parse(json);
+            foreach (var item in doc.RootElement.EnumerateArray().Take(2))
+            {
+                Console.WriteLine("Title: " + (item.TryGetProperty("title", out var t) ? t.GetString() : ""));
+                Console.WriteLine("ID: " + (item.TryGetProperty("id", out var i) ? i.GetString() : ""));
+                Console.WriteLine("Namespace: " + (item.TryGetProperty("namespace", out var n) ? n.GetString() : ""));
+                if (item.TryGetProperty("customAttributes", out var attrs))
+                {
+                    Console.WriteLine("Attributes:");
+                    foreach (var attr in attrs.EnumerateObject())
+                    {
+                        var val = attr.Value.TryGetProperty("value", out var v) ? v.GetString() : "";
+                        Console.WriteLine($"  {attr.Name}: {val}");
+                    }
+                }
+                Console.WriteLine("---------------------");
+            }
+        }
+        else
+        {
+            Console.WriteLine("catcache.bin not found");
+        }
     }
 }

@@ -22,6 +22,28 @@ public class EpicGamesDetector : IGameDetector
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
         "Epic", "EpicGamesLauncher", "Data", "Catalog", "catcache.bin");
 
+    private static readonly HashSet<string> ExcludedCategories = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "software", "digitalextras", "plugins", "plugins/engine", "engines", "engines/preview",
+        "engines/ue4", "engines/ue5", "engines/unstable", "asset-format", "type", "type/asset",
+        "type/format-item", "projects", "projects/completeprojects", "projects/tutorials",
+        "developer", "audience", "hidden", "appproxy", "subscription", "bundles"
+    };
+
+    private static readonly HashSet<string> ExcludedNamespaces = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "ue", "poodle", "epic"
+    };
+
+    private static readonly string[] ExcludedTitlePatterns = new[]
+    {
+        @"\b(Soundtrack|Sound Track|Art Book|Artbook|Wallpaper|HD Wallpaper)\b",
+        @"\b(Beta|Tech Beta|Public Testing|Playtest)\b",
+        @"\b(Promotion|Promo|Discount|Audience|Marker)\b",
+        @"\b(Twinmotion|RealityCapture|RealityScan|Unreal Engine)\b",
+        @"\b(Expansion Pack|DLC|Addon|Add-on|Outfit|Skin Pack)\b"
+    };
+
     public async Task<IReadOnlyList<DetectedGame>> DetectGamesAsync(CancellationToken cancellationToken = default)
     {
         var gamesMap = new Dictionary<string, DetectedGame>(StringComparer.OrdinalIgnoreCase);
@@ -49,11 +71,37 @@ public class EpicGamesDetector : IGameDetector
                         if (string.IsNullOrWhiteSpace(displayName) || string.IsNullOrWhiteSpace(installLocation))
                             continue;
 
+                        // Filter installed DLCs / plugins / non-games
+                        if (root.TryGetProperty("AppCategories", out var acProp) && acProp.ValueKind == JsonValueKind.Array)
+                        {
+                            var appCategories = acProp.EnumerateArray()
+                                .Select(c => c.GetString())
+                                .Where(c => !string.IsNullOrEmpty(c))
+                                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                            if (appCategories.Contains("addons") && !appCategories.Contains("addons/launchable"))
+                                continue;
+
+                            if (appCategories.Any(a => a != null && (a == "plugins" || a == "plugins/engine" || a.StartsWith("plugins/"))))
+                                continue;
+                        }
+
+                        if (root.TryGetProperty("TechnicalType", out var ttProp) && ttProp.GetString()?.Contains("plugins/engine", StringComparison.OrdinalIgnoreCase) == true)
+                            continue;
+
+                        if (root.TryGetProperty("CompatibleApps", out var caProp) && caProp.ValueKind == JsonValueKind.Array)
+                        {
+                            if (caProp.EnumerateArray().Any(a => a.GetString()?.StartsWith("UE_", StringComparison.OrdinalIgnoreCase) == true))
+                                continue;
+                        }
+
+                        if (IsExcludedTitle(displayName))
+                            continue;
+
                         var exePath = !string.IsNullOrWhiteSpace(launchExe)
                             ? Path.Combine(installLocation, launchExe)
                             : null;
 
-                        // Fallback to a random Guid if CatalogItemId is missing, to still detect it as installed
                         var gameId = !string.IsNullOrWhiteSpace(catalogItemId) ? catalogItemId : Guid.NewGuid().ToString();
 
                         gamesMap[gameId] = new DetectedGame
@@ -96,41 +144,98 @@ public class EpicGamesDetector : IGameDetector
 
                         var id = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
                         var title = item.TryGetProperty("title", out var titleProp) ? titleProp.GetString() : null;
+                        var ns = item.TryGetProperty("namespace", out var nsProp) ? nsProp.GetString() : "";
 
                         if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(title))
+                            continue;
+
+                        if (!string.IsNullOrEmpty(ns) && ExcludedNamespaces.Contains(ns))
                             continue;
 
                         // Skip if already added as an installed game
                         if (gamesMap.ContainsKey(id))
                             continue;
 
-                        bool isGame = false;
+                        var categories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                         if (item.TryGetProperty("categories", out var cats) && cats.ValueKind == JsonValueKind.Array)
                         {
                             foreach (var cat in cats.EnumerateArray())
                             {
-                                var path = cat.TryGetProperty("path", out var pathProp) ? pathProp.GetString() : null;
-                                // Many games are categorized under "games" or "applications"
-                                if (path != null && (path.Equals("games", StringComparison.OrdinalIgnoreCase) || path.Equals("applications", StringComparison.OrdinalIgnoreCase)))
+                                if (cat.TryGetProperty("path", out var pathProp))
                                 {
-                                    isGame = true;
-                                    break;
+                                    var path = pathProp.GetString();
+                                    if (!string.IsNullOrEmpty(path)) categories.Add(path);
                                 }
                             }
                         }
 
-                        if (isGame)
+                        // Must belong to a valid game category
+                        bool hasValidCategory = categories.Contains("games") || 
+                                                categories.Contains("games/experience") || 
+                                                categories.Contains("applications") || 
+                                                categories.Contains("application") || 
+                                                categories.Contains("freegames");
+
+                        if (!hasValidCategory)
+                            continue;
+
+                        // Reject excluded non-game categories
+                        if (categories.Any(c => ExcludedCategories.Contains(c) || 
+                                                c.StartsWith("engines/", StringComparison.OrdinalIgnoreCase) || 
+                                                c.StartsWith("plugins/", StringComparison.OrdinalIgnoreCase) || 
+                                                c.StartsWith("projects/", StringComparison.OrdinalIgnoreCase) || 
+                                                c.StartsWith("asset-format/", StringComparison.OrdinalIgnoreCase)))
+                            continue;
+
+                        // Filter unlaunchable addons / DLCs
+                        bool isAddon = categories.Contains("addons") || categories.Contains("addons/durable");
+                        bool isLaunchableAddon = categories.Contains("addons/launchable");
+                        if (isAddon && !isLaunchableAddon)
+                            continue;
+
+                        // Check mainGameItem (if it points to another main game item, it's a DLC)
+                        if (item.TryGetProperty("mainGameItem", out var mainGameProp) && !isLaunchableAddon)
                         {
-                            gamesMap[id] = new DetectedGame
+                            if (mainGameProp.ValueKind == JsonValueKind.Object && mainGameProp.TryGetProperty("id", out var mgId))
                             {
-                                Title = title,
-                                Platform = PlatformId,
-                                IsOwned = true,
-                                IsInstalled = false,
-                                ExePath = null,
-                                StartDir = null,
-                            };
+                                var mgIdStr = mgId.GetString();
+                                if (!string.IsNullOrWhiteSpace(mgIdStr))
+                                    continue;
+                            }
                         }
+
+                        if (IsExcludedTitle(title))
+                            continue;
+
+                        string storeSlug = null;
+                        if (item.TryGetProperty("customAttributes", out var attrs))
+                        {
+                            if (attrs.TryGetProperty("com.epicgames.app.productSlug", out var attr))
+                            {
+                                var val = attr.TryGetProperty("value", out var v) ? v.GetString() : null;
+                                if (!string.IsNullOrEmpty(val))
+                                {
+                                    storeSlug = val.Replace("/home", "").Split('/')[0];
+                                }
+                            }
+                        }
+
+                        if (string.IsNullOrWhiteSpace(storeSlug) && !string.IsNullOrWhiteSpace(title))
+                        {
+                            var sanitized = Utilities.TitleSanitizer.Sanitize(title);
+                            storeSlug = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+                        }
+
+                        gamesMap[id] = new DetectedGame
+                        {
+                            Title = title,
+                            Platform = PlatformId,
+                            IsOwned = true,
+                            IsInstalled = false,
+                            ExePath = null,
+                            StartDir = null,
+                            LaunchArguments = storeSlug // Store slug for dummy generator
+                        };
                     }
                 }
             }
@@ -141,5 +246,16 @@ public class EpicGamesDetector : IGameDetector
         }
 
         return gamesMap.Values.ToList();
+    }
+
+    private static bool IsExcludedTitle(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title)) return true;
+        foreach (var pattern in ExcludedTitlePatterns)
+        {
+            if (System.Text.RegularExpressions.Regex.IsMatch(title, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                return true;
+        }
+        return false;
     }
 }
