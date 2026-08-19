@@ -65,7 +65,7 @@ public class UninstalledImageProcessor
             {
                 await ProcessGameArtworkAsync(game, cacheDir, null, ct);
                 
-                if (game.Platform == "BattleNet" || game.Platform == "Battle.net" || game.Platform == "Epic" || game.Platform == "GOG" || game.Platform == "Gog" || game.Platform == "Ubisoft" || game.Platform == "Ubisoft Connect" || game.Platform == "Uplay" || game.Platform == "EA" || game.Platform == "EA App" || game.Platform == "Origin" || game.Platform == "Rockstar" || game.Platform == "Rockstar Games")
+                if (game.Platform == "BattleNet" || game.Platform == "Battle.net" || game.Platform == "Epic" || game.Platform == "GOG" || game.Platform == "Gog" || game.Platform == "Ubisoft" || game.Platform == "Ubisoft Connect" || game.Platform == "Uplay" || game.Platform == "EA" || game.Platform == "EA App" || game.Platform == "Origin" || game.Platform == "Rockstar" || game.Platform == "Rockstar Games" || game.Platform == "Xbox" || game.Platform == "Microsoft Store" || game.Platform == "Windows Store")
                 {
                     bool generated = false;
                     string exePath = string.Empty;
@@ -325,6 +325,60 @@ public class UninstalledImageProcessor
                         game.ExePath = launcherPath;
                         game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
                         game.LaunchArguments = string.Empty;
+                        game.IsInstalled = true; // Required by the injector
+
+                        var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
+                        game.SteamAppId = newAppId;
+
+                        var userIds = Steam.SteamPathResolver.GetUserIds();
+                        foreach (var userId in userIds)
+                        {
+                            var gridPath = Steam.SteamPathResolver.GetGridPath(userId);
+                            if (gridPath != null)
+                            {
+                                var platformDir = Path.Combine(cacheDir, game.Platform);
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}p.png"), Path.Combine(gridPath, $"{newAppId}p.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}.png"), Path.Combine(gridPath, $"{newAppId}.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_hero.png"), Path.Combine(gridPath, $"{newAppId}_hero.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_logo.png"), Path.Combine(gridPath, $"{newAppId}_logo.png"));
+                            }
+                        }
+
+                        dummyGamesToSync.Add(game);
+                    }
+                    else if (game.Platform == "Xbox" || game.Platform == "Microsoft Store" || game.Platform == "Windows Store")
+                    {
+                        var launchArg = game.LaunchArguments;
+                        string url;
+                        if (!string.IsNullOrWhiteSpace(launchArg) && (launchArg.StartsWith("ms-windows-store://", StringComparison.OrdinalIgnoreCase) || launchArg.StartsWith("xbox-app://", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            url = launchArg;
+                        }
+                        else if (!string.IsNullOrWhiteSpace(launchArg) && launchArg.Length == 12 && System.Text.RegularExpressions.Regex.IsMatch(launchArg, @"^[a-zA-Z0-9]{12}$"))
+                        {
+                            url = $"ms-windows-store://pdp/?productid={launchArg}";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(launchArg) && launchArg.Contains("_"))
+                        {
+                            url = $"ms-windows-store://pdp/?PFN={launchArg}";
+                        }
+                        else
+                        {
+                            url = "ms-windows-store://";
+                        }
+
+                        var launcherPath = Detection.XboxDetector.GetXboxLauncherPath();
+                        var cmdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
+
+                        var oldAppId = game.SteamAppId != 0 
+                            ? game.SteamAppId 
+                            : Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath ?? game.Title, game.Title);
+
+                        game.ExePath = File.Exists(cmdPath) ? cmdPath : launcherPath;
+                        game.StartDir = string.Empty;
+                        game.LaunchArguments = File.Exists(cmdPath)
+                            ? $"/c start \"\" \"{url}\""
+                            : $"\"{url}\"";
                         game.IsInstalled = true; // Required by the injector
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);

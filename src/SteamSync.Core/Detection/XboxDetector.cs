@@ -30,7 +30,7 @@ public class XboxDetector : IGameDetector
             var startInfo = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
-                Arguments = "-NoProfile -Command \"Get-AppxPackage -PackageTypeFilter Main | Select-Object -Property Name, InstallLocation | ConvertTo-Json -Compress\"",
+                Arguments = "-NoProfile -Command \"Get-AppxPackage -PackageTypeFilter Main | Select-Object -Property Name, PackageFamilyName, InstallLocation | ConvertTo-Json -Compress\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -73,6 +73,7 @@ public class XboxDetector : IGameDetector
     private void ProcessPackageElement(JsonElement element, List<DetectedGame> games)
     {
         var name = element.TryGetProperty("Name", out var n) ? n.GetString() : null;
+        var packageFamilyName = element.TryGetProperty("PackageFamilyName", out var pfn) ? pfn.GetString() : null;
         var installLocation = element.TryGetProperty("InstallLocation", out var il) ? il.GetString() : null;
 
         if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(installLocation))
@@ -100,11 +101,15 @@ public class XboxDetector : IGameDetector
             // 1. If any application executable is GameLaunchHelper.exe
             // 2. If it has Xbox Live protocols (ms-xbl-*)
             bool isGame = !string.IsNullOrEmpty(category) && category.Contains("game", StringComparison.OrdinalIgnoreCase);
+            string? appId = null;
 
-            if (!isGame)
+            var appsElement = xDoc.Root?.Element(ns + "Applications");
+            if (appsElement != null)
             {
-                var appsElement = xDoc.Root?.Element(ns + "Applications");
-                if (appsElement != null)
+                var firstApp = appsElement.Elements(ns + "Application").FirstOrDefault();
+                appId = firstApp?.Attribute("Id")?.Value ?? "App";
+
+                if (!isGame)
                 {
                     foreach (var app in appsElement.Elements(ns + "Application"))
                     {
@@ -141,6 +146,12 @@ public class XboxDetector : IGameDetector
                     ? displayName 
                     : name;
 
+                var explorerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+                var exePath = File.Exists(explorerPath) ? explorerPath : "explorer.exe";
+                var launchArgs = !string.IsNullOrWhiteSpace(packageFamilyName)
+                    ? $"shell:AppsFolder\\{packageFamilyName}!{appId ?? "App"}"
+                    : string.Empty;
+
                 games.Add(new DetectedGame
                 {
                     Title = title,
@@ -148,10 +159,8 @@ public class XboxDetector : IGameDetector
                     IsOwned = true,
                     IsInstalled = true,
                     StartDir = installLocation,
-                    // UWP apps don't use a simple ExePath to launch directly in most cases.
-                    // Instead they are launched via shell:AppsFolder\PackageFamilyName!AppId
-                    // For now, we leave ExePath null, and it will be handled by the launcher logic.
-                    ExePath = null
+                    ExePath = exePath,
+                    LaunchArguments = launchArgs
                 });
             }
         }
@@ -159,5 +168,19 @@ public class XboxDetector : IGameDetector
         {
             // Ignore XML parsing errors for individual manifests
         }
+    }
+
+    /// <summary>
+    /// Resolves the explorer.exe path or Xbox app / Store launcher path.
+    /// </summary>
+    public static string GetXboxLauncherPath()
+    {
+        var explorerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+        if (File.Exists(explorerPath)) return explorerPath;
+
+        var cmdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
+        if (File.Exists(cmdPath)) return cmdPath;
+
+        return "explorer.exe";
     }
 }

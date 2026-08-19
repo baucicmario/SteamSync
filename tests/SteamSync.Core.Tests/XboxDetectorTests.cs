@@ -40,4 +40,11 @@ public class XboxDetectorTests
             Assert.False(string.IsNullOrWhiteSpace(game.Title));
         }
     }
+
+    [Fact]
+    public void GetXboxLauncherPath_ReturnsValidPath()
+    {
+        var path = XboxDetector.GetXboxLauncherPath();
+        Assert.False(string.IsNullOrWhiteSpace(path));
+    }
 }
