@@ -65,7 +65,7 @@ public class UninstalledImageProcessor
             {
                 await ProcessGameArtworkAsync(game, cacheDir, null, ct);
                 
-                if (game.Platform == "BattleNet" || game.Platform == "Battle.net" || game.Platform == "Epic" || game.Platform == "GOG" || game.Platform == "Gog" || game.Platform == "Ubisoft" || game.Platform == "Ubisoft Connect" || game.Platform == "Uplay" || game.Platform == "EA" || game.Platform == "EA App" || game.Platform == "Origin")
+                if (game.Platform == "BattleNet" || game.Platform == "Battle.net" || game.Platform == "Epic" || game.Platform == "GOG" || game.Platform == "Gog" || game.Platform == "Ubisoft" || game.Platform == "Ubisoft Connect" || game.Platform == "Uplay" || game.Platform == "EA" || game.Platform == "EA App" || game.Platform == "Origin" || game.Platform == "Rockstar" || game.Platform == "Rockstar Games")
                 {
                     bool generated = false;
                     string exePath = string.Empty;
