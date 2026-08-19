@@ -258,4 +258,49 @@ public class EpicGamesDetector : IGameDetector
         }
         return false;
     }
+
+    /// <summary>
+    /// Resolves the installed Epic Games launcher executable path,
+    /// checking protocol handler registry, standard installation locations, and explorer.exe fallback.
+    /// </summary>
+    public static string GetEpicLauncherPath()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(@"com.epicgames.launcher\shell\open\command");
+            if (key != null)
+            {
+                var command = key.GetValue(null) as string;
+                if (!string.IsNullOrWhiteSpace(command))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(command, "\"([^\"]+)\"");
+                    if (match.Success && File.Exists(match.Groups[1].Value))
+                    {
+                        return match.Groups[1].Value;
+                    }
+                }
+            }
+        }
+        catch { }
+
+        var defaultPaths = new[]
+        {
+            @"C:\Program Files\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe",
+            @"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe",
+            @"C:\Program Files\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe",
+            @"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe",
+            @"C:\Program Files\Epic Games\Launcher\Engine\Binaries\Win64\EpicGamesLauncher.exe",
+            @"C:\Program Files (x86)\Epic Games\Launcher\Engine\Binaries\Win64\EpicGamesLauncher.exe",
+        };
+
+        foreach (var path in defaultPaths)
+        {
+            if (File.Exists(path)) return path;
+        }
+
+        var explorerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+        if (File.Exists(explorerPath)) return explorerPath;
+
+        return "explorer.exe";
+    }
 }

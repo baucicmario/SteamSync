@@ -134,11 +134,39 @@ public class UninstalledImageProcessor
                             storeSlug = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
                         }
 
-                        var exeName = string.IsNullOrEmpty(storeSlug) ? Utilities.TitleSanitizer.Sanitize(game.Title) : storeSlug;
-                        var generator = new Steam.EpicExecutableGenerator(_logger);
-                        var exeDir = Path.Combine(cacheDir, "Executables", "Epic");
-                        exePath = Path.Combine(exeDir, $"{exeName}.exe");
-                        generated = generator.GenerateExecutable(storeSlug, exePath);
+                        var url = string.IsNullOrWhiteSpace(storeSlug)
+                            ? "com.epicgames.launcher://store/library"
+                            : $"com.epicgames.launcher://store/p/{storeSlug}";
+
+                        var launcherPath = Detection.EpicGamesDetector.GetEpicLauncherPath();
+
+                        var oldAppId = game.SteamAppId != 0 
+                            ? game.SteamAppId 
+                            : Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath ?? game.Title, game.Title);
+
+                        game.ExePath = launcherPath;
+                        game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
+                        game.LaunchArguments = $"\"{url}\"";
+                        game.IsInstalled = true; // Required by the injector
+
+                        var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
+                        game.SteamAppId = newAppId;
+
+                        var userIds = Steam.SteamPathResolver.GetUserIds();
+                        foreach (var userId in userIds)
+                        {
+                            var gridPath = Steam.SteamPathResolver.GetGridPath(userId);
+                            if (gridPath != null)
+                            {
+                                var platformDir = Path.Combine(cacheDir, game.Platform);
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}p.png"), Path.Combine(gridPath, $"{newAppId}p.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}.png"), Path.Combine(gridPath, $"{newAppId}.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_hero.png"), Path.Combine(gridPath, $"{newAppId}_hero.png"));
+                                CopyIfExist(Path.Combine(platformDir, $"{oldAppId}_logo.png"), Path.Combine(gridPath, $"{newAppId}_logo.png"));
+                            }
+                        }
+
+                        dummyGamesToSync.Add(game);
                     }
                     else if (game.Platform == "GOG" || game.Platform == "Gog")
                     {
