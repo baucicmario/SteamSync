@@ -316,23 +316,6 @@ public class UninstalledImageProcessor
                     }
                     else if (game.Platform == "Rockstar" || game.Platform == "Rockstar Games")
                     {
-                        var titleId = game.LaunchArguments;
-                        if (string.IsNullOrWhiteSpace(titleId))
-                        {
-                            var match = Detection.RockstarDetector.KnownRockstarGames.FirstOrDefault(kvp => 
-                                string.Equals(kvp.Value.Title, game.Title, StringComparison.OrdinalIgnoreCase));
-                            if (!string.IsNullOrEmpty(match.Key))
-                            {
-                                titleId = match.Key;
-                            }
-                        }
-
-                        if (string.IsNullOrWhiteSpace(titleId) && !string.IsNullOrWhiteSpace(game.Title))
-                        {
-                            var sanitized = Utilities.TitleSanitizer.Sanitize(game.Title);
-                            titleId = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "").Trim();
-                        }
-
                         var launcherPath = Detection.RockstarDetector.GetRockstarLauncherPath();
 
                         var oldAppId = game.SteamAppId != 0 
@@ -341,9 +324,7 @@ public class UninstalledImageProcessor
 
                         game.ExePath = launcherPath;
                         game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
-                        game.LaunchArguments = !string.IsNullOrWhiteSpace(titleId)
-                            ? $"-installTitle {titleId}"
-                            : string.Empty;
+                        game.LaunchArguments = string.Empty;
                         game.IsInstalled = true; // Required by the injector
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);

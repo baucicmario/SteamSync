@@ -50,12 +50,11 @@ When implementing the ID resolution and path detection logic for the following c
     *   `GameUID` (e.g., `odin` for Call of Duty: Modern Warfare, `WoW` for World of Warcraft).
 
 ## 6. Rockstar Games Launcher - Tested Works
-*   **Execution Method:** Command-line executable argument
-*   **Protocol Scheme:** N/A (Relies on executable flags)
-*   **Installation Command:** `"<PathToRockstarLauncher>\Launcher.exe" -installTitle {TitleID}`
-*   **Behavior:** Launches the Rockstar client and automatically navigates to the installation confirmation screen.
+*   **Execution Method:** Command-line executable argument / launcher execution
+*   **Protocol Scheme:** N/A
+*   **Installation Command:** `"<PathToRockstarLauncher>\Launcher.exe"`
+*   **Behavior:** Rockstar Games Launcher does not support deep-linking installation CLI flags or custom URIs. As implemented in Playnite (`RockstarInstallController`), launching `Launcher.exe` directly opens the Rockstar client to the library/home view where the user can initiate download/install.
 *   **Required Identifiers:**
-    *   `TitleID` (e.g., `GTAV`, `RDR2`).
     *   Requires programmatic path resolution to the Rockstar Games Launcher executable.
 
 ## 7. Xbox / Windows Store - Tested Works
@@ -98,9 +97,9 @@ When implementing the ID resolution and path detection logic for the following c
     ```
 
 ### Rockstar Games Launcher
-*   **Install Game (GTA: San Andreas) - Dynamic PowerShell Example:**
+*   **Launch Client - Dynamic PowerShell Example:**
     ```powershell
-    $rsPath = Join-Path (Get-ItemProperty "HKLM:\SOFTWARE\WOW6432Node\Rockstar Games\Launcher").InstallFolder "Launcher.exe"; Start-Process $rsPath -ArgumentList "-installTitle gta-sa"
+    $rsPath = Join-Path (Get-ItemProperty "HKLM:\SOFTWARE\WOW6432Node\Rockstar Games\Launcher").InstallFolder "Launcher.exe"; Start-Process $rsPath
     ```
 
 ### Xbox / Windows Store
