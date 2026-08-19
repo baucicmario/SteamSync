@@ -129,10 +129,6 @@ public class UninstalledImageProcessor
                         {
                             url = launchArg;
                         }
-                        else if (!string.IsNullOrWhiteSpace(launchArg) && !launchArg.Contains("://") && !launchArg.Contains(" ") && !launchArg.Contains("?"))
-                        {
-                            url = $"com.epicgames.launcher://store/p/{launchArg}";
-                        }
                         else
                         {
                             url = "com.epicgames.launcher://store/library";
