@@ -122,21 +122,21 @@ public class UninstalledImageProcessor
                     }
                     else if (game.Platform == "Epic")
                     {
-                        var storeSlug = game.LaunchArguments;
-                        if (storeSlug != null && storeSlug.Length == 32 && System.Text.RegularExpressions.Regex.IsMatch(storeSlug, @"^[a-fA-F0-9]{32}$"))
-                        {
-                            storeSlug = null; // Ignore old namespace fallbacks cached in the DB
-                        }
+                        var launchArg = game.LaunchArguments;
+                        string url;
 
-                        if (string.IsNullOrWhiteSpace(storeSlug) && !string.IsNullOrWhiteSpace(game.Title))
+                        if (!string.IsNullOrWhiteSpace(launchArg) && launchArg.StartsWith("com.epicgames.launcher://", StringComparison.OrdinalIgnoreCase))
                         {
-                            var sanitized = Utilities.TitleSanitizer.Sanitize(game.Title);
-                            storeSlug = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+                            url = launchArg;
                         }
-
-                        var url = string.IsNullOrWhiteSpace(storeSlug)
-                            ? "com.epicgames.launcher://store/library"
-                            : $"com.epicgames.launcher://store/p/{storeSlug}";
+                        else if (!string.IsNullOrWhiteSpace(launchArg) && !launchArg.Contains("://") && !launchArg.Contains(" "))
+                        {
+                            url = $"com.epicgames.launcher://apps/{launchArg}?action=install";
+                        }
+                        else
+                        {
+                            url = "com.epicgames.launcher://store/library";
+                        }
 
                         var launcherPath = Detection.EpicGamesDetector.GetEpicLauncherPath();
 

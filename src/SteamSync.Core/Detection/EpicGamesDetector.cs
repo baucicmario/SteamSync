@@ -207,24 +207,31 @@ public class EpicGamesDetector : IGameDetector
                         if (IsExcludedTitle(title))
                             continue;
 
-                        string storeSlug = null;
-                        if (item.TryGetProperty("customAttributes", out var attrs))
+                        string? appId = null;
+                        if (item.TryGetProperty("releaseInfo", out var rel) && rel.ValueKind == JsonValueKind.Array)
                         {
-                            if (attrs.TryGetProperty("com.epicgames.app.productSlug", out var attr))
+                            foreach (var r in rel.EnumerateArray())
                             {
-                                var val = attr.TryGetProperty("value", out var v) ? v.GetString() : null;
-                                if (!string.IsNullOrEmpty(val))
+                                if (r.TryGetProperty("appId", out var a))
                                 {
-                                    storeSlug = val.Replace("/home", "").Split('/')[0];
+                                    var aStr = a.GetString();
+                                    if (!string.IsNullOrWhiteSpace(aStr))
+                                    {
+                                        appId = aStr;
+                                        break;
+                                    }
                                 }
                             }
                         }
 
-                        if (string.IsNullOrWhiteSpace(storeSlug) && !string.IsNullOrWhiteSpace(title))
+                        if (string.IsNullOrWhiteSpace(appId))
                         {
-                            var sanitized = Utilities.TitleSanitizer.Sanitize(title);
-                            storeSlug = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+                            appId = !string.IsNullOrWhiteSpace(ns) ? ns : id;
                         }
+
+                        var launchUri = !string.IsNullOrWhiteSpace(appId)
+                            ? $"com.epicgames.launcher://apps/{appId}?action=install"
+                            : "com.epicgames.launcher://store/library";
 
                         gamesMap[id] = new DetectedGame
                         {
@@ -234,7 +241,7 @@ public class EpicGamesDetector : IGameDetector
                             IsInstalled = false,
                             ExePath = null,
                             StartDir = null,
-                            LaunchArguments = storeSlug // Store slug for dummy generator
+                            LaunchArguments = launchUri
                         };
                     }
                 }
