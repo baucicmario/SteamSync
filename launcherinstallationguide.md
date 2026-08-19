@@ -11,7 +11,7 @@ When implementing the ID resolution and path detection logic for the following c
 ## 1. Epic Games Store - Tested Works
 *   **Execution Method:** URI Protocol
 *   **Protocol Scheme:** `com.epicgames.launcher://`
-*   **Installation Command:** `com.epicgames.launcher://store/library` (Fallback to library) OR `com.epicgames.launcher://store/p/{StoreSlug}` (Fallback to store page)
+*   **Installation Command:** `com.epicgames.launcher://` (Fallback to launcher/library) OR `com.epicgames.launcher://store/p/{StoreSlug}` (Fallback to store page)
 *   **Behavior:** Due to bugs in the new Epic Games Launcher installation dialog (which fails to show progress properly or doesn't open at all), Playnite abandoned the `?action=install` parameter. It is now recommended to simply open the Epic library view or route the user to the specific game's store page where they can initiate the install manually.
 *   **Required Identifiers:**
     *   `StoreSlug` (e.g., `hogwarts-legacy`) if deep-linking to the product page. None needed if falling back to the library view.
@@ -71,7 +71,7 @@ When implementing the ID resolution and path detection logic for the following c
 ## Appendix: Example Commands
 
 ### Epic Games Store
-*   **Open Library:** `com.epicgames.launcher://store/library`
+*   **Open Launcher / Library:** `com.epicgames.launcher://`
 *   **Open Specific Game Page (Hogwarts Legacy):** `com.epicgames.launcher://store/p/hogwarts-legacy`
 
 ### GOG Galaxy

@@ -220,9 +220,15 @@ public class EpicGamesDetector : IGameDetector
                             }
                         }
 
+                        if (string.IsNullOrWhiteSpace(storeSlug) && !string.IsNullOrWhiteSpace(title))
+                        {
+                            var sanitized = Utilities.TitleSanitizer.Sanitize(title);
+                            storeSlug = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+                        }
+
                         var launchUri = !string.IsNullOrWhiteSpace(storeSlug)
                             ? $"com.epicgames.launcher://store/p/{storeSlug}"
-                            : "com.epicgames.launcher://store/library";
+                            : "com.epicgames.launcher://";
 
                         gamesMap[id] = new DetectedGame
                         {

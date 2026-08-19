@@ -127,11 +127,23 @@ public class UninstalledImageProcessor
 
                         if (!string.IsNullOrWhiteSpace(launchArg) && launchArg.StartsWith("com.epicgames.launcher://", StringComparison.OrdinalIgnoreCase))
                         {
-                            url = launchArg;
+                            url = launchArg.Equals("com.epicgames.launcher://store/library", StringComparison.OrdinalIgnoreCase)
+                                ? "com.epicgames.launcher://"
+                                : launchArg;
+                        }
+                        else if (!string.IsNullOrWhiteSpace(launchArg) && !launchArg.Contains("://") && !launchArg.Contains(" ") && !launchArg.Contains("?"))
+                        {
+                            url = $"com.epicgames.launcher://store/p/{launchArg}";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(game.Title))
+                        {
+                            var sanitized = Utilities.TitleSanitizer.Sanitize(game.Title);
+                            var slug = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+                            url = !string.IsNullOrWhiteSpace(slug) ? $"com.epicgames.launcher://store/p/{slug}" : "com.epicgames.launcher://";
                         }
                         else
                         {
-                            url = "com.epicgames.launcher://store/library";
+                            url = "com.epicgames.launcher://";
                         }
 
                         var launcherPath = Detection.EpicGamesDetector.GetEpicLauncherPath();
