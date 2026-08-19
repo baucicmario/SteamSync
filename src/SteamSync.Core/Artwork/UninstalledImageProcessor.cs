@@ -123,27 +123,15 @@ public class UninstalledImageProcessor
                     else if (game.Platform == "Epic")
                     {
                         var launchArg = game.LaunchArguments;
-                        string url;
+                        string launchOptions;
 
-                        if (!string.IsNullOrWhiteSpace(launchArg) && launchArg.StartsWith("com.epicgames.launcher://", StringComparison.OrdinalIgnoreCase))
+                        if (!string.IsNullOrWhiteSpace(launchArg) && launchArg.StartsWith("com.epicgames.launcher://store/p/", StringComparison.OrdinalIgnoreCase))
                         {
-                            url = launchArg.Equals("com.epicgames.launcher://store/library", StringComparison.OrdinalIgnoreCase)
-                                ? "com.epicgames.launcher://"
-                                : launchArg;
-                        }
-                        else if (!string.IsNullOrWhiteSpace(launchArg) && !launchArg.Contains("://") && !launchArg.Contains(" ") && !launchArg.Contains("?"))
-                        {
-                            url = $"com.epicgames.launcher://store/p/{launchArg}";
-                        }
-                        else if (!string.IsNullOrWhiteSpace(game.Title))
-                        {
-                            var sanitized = Utilities.TitleSanitizer.Sanitize(game.Title);
-                            var slug = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
-                            url = !string.IsNullOrWhiteSpace(slug) ? $"com.epicgames.launcher://store/p/{slug}" : "com.epicgames.launcher://";
+                            launchOptions = $"\"{launchArg}\"";
                         }
                         else
                         {
-                            url = "com.epicgames.launcher://";
+                            launchOptions = string.Empty;
                         }
 
                         var launcherPath = Detection.EpicGamesDetector.GetEpicLauncherPath();
@@ -154,7 +142,7 @@ public class UninstalledImageProcessor
 
                         game.ExePath = launcherPath;
                         game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
-                        game.LaunchArguments = $"\"{url}\"";
+                        game.LaunchArguments = launchOptions;
                         game.IsInstalled = true; // Required by the injector
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
