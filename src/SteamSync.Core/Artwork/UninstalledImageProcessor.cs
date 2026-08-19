@@ -140,18 +140,21 @@ public class UninstalledImageProcessor
                         }
 
                         var url = string.IsNullOrWhiteSpace(storeSlug)
-                            ? "com.epicgames.launcher://store/library"
+                            ? "com.epicgames.launcher://store"
                             : $"com.epicgames.launcher://store/p/{storeSlug}";
 
                         var launcherPath = Detection.EpicGamesDetector.GetEpicLauncherPath();
+                        var cmdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
 
                         var oldAppId = game.SteamAppId != 0 
                             ? game.SteamAppId 
                             : Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath ?? game.Title, game.Title);
 
-                        game.ExePath = launcherPath;
+                        game.ExePath = File.Exists(cmdPath) ? cmdPath : launcherPath;
                         game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
-                        game.LaunchArguments = $"\"{url}\"";
+                        game.LaunchArguments = File.Exists(cmdPath)
+                            ? $"/c start \"\" \"{url}\""
+                            : $"\"{url}\"";
                         game.IsInstalled = true; // Required by the injector
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
