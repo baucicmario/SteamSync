@@ -153,14 +153,17 @@ public class UninstalledImageProcessor
                         }
 
                         var launcherPath = Detection.GogDetector.GetGogLauncherPath();
+                        var cmdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
 
                         var oldAppId = game.SteamAppId != 0 
                             ? game.SteamAppId 
                             : Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath ?? game.Title, game.Title);
 
-                        game.ExePath = launcherPath;
+                        game.ExePath = File.Exists(cmdPath) ? cmdPath : launcherPath;
                         game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
-                        game.LaunchArguments = $"\"goggalaxy://openGameView/{gameId}\"";
+                        game.LaunchArguments = File.Exists(cmdPath)
+                            ? $"/c start \"\" \"{launcherPath}\" /gameId={gameId} /command=installGame & ping 127.0.0.1 -n 2 >nul & start \"\" \"goggalaxy://openGameView/{gameId}\""
+                            : $"/gameId={gameId} /command=installGame";
                         game.IsInstalled = true; // Required by the injector
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
