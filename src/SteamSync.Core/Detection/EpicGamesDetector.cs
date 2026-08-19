@@ -220,9 +220,11 @@ public class EpicGamesDetector : IGameDetector
                             }
                         }
 
-                        var launchUri = !string.IsNullOrWhiteSpace(storeSlug)
-                            ? $"com.epicgames.launcher://store/p/{storeSlug}"
-                            : string.Empty;
+                        if (string.IsNullOrWhiteSpace(storeSlug) && !string.IsNullOrWhiteSpace(title))
+                        {
+                            var sanitized = Utilities.TitleSanitizer.Sanitize(title);
+                            storeSlug = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+                        }
 
                         gamesMap[id] = new DetectedGame
                         {
@@ -232,7 +234,7 @@ public class EpicGamesDetector : IGameDetector
                             IsInstalled = false,
                             ExePath = null,
                             StartDir = null,
-                            LaunchArguments = launchUri
+                            LaunchArguments = storeSlug
                         };
                     }
                 }

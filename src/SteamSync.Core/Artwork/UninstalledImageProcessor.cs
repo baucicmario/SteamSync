@@ -122,17 +122,26 @@ public class UninstalledImageProcessor
                     }
                     else if (game.Platform == "Epic")
                     {
-                        var launchArg = game.LaunchArguments;
-                        string launchOptions;
+                        var storeSlug = game.LaunchArguments;
+                        if (storeSlug != null && storeSlug.Length == 32 && System.Text.RegularExpressions.Regex.IsMatch(storeSlug, @"^[a-fA-F0-9]{32}$"))
+                        {
+                            storeSlug = null; // Ignore old namespace fallbacks cached in the DB
+                        }
 
-                        if (!string.IsNullOrWhiteSpace(launchArg) && launchArg.StartsWith("com.epicgames.launcher://store/p/", StringComparison.OrdinalIgnoreCase))
+                        if (storeSlug != null && storeSlug.StartsWith("com.epicgames.launcher://store/p/", StringComparison.OrdinalIgnoreCase))
                         {
-                            launchOptions = $"\"{launchArg}\"";
+                            storeSlug = storeSlug.Substring("com.epicgames.launcher://store/p/".Length).Trim('"');
                         }
-                        else
+
+                        if (string.IsNullOrWhiteSpace(storeSlug) && !string.IsNullOrWhiteSpace(game.Title))
                         {
-                            launchOptions = string.Empty;
+                            var sanitized = Utilities.TitleSanitizer.Sanitize(game.Title);
+                            storeSlug = System.Text.RegularExpressions.Regex.Replace(sanitized.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
                         }
+
+                        var url = string.IsNullOrWhiteSpace(storeSlug)
+                            ? "com.epicgames.launcher://store/library"
+                            : $"com.epicgames.launcher://store/p/{storeSlug}";
 
                         var launcherPath = Detection.EpicGamesDetector.GetEpicLauncherPath();
 
@@ -142,7 +151,7 @@ public class UninstalledImageProcessor
 
                         game.ExePath = launcherPath;
                         game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
-                        game.LaunchArguments = launchOptions;
+                        game.LaunchArguments = $"\"{url}\"";
                         game.IsInstalled = true; // Required by the injector
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
