@@ -510,9 +510,68 @@ public class RockstarDetector : IGameDetector
             ExePath = exePath,
             StartDir = installDir,
             IsVR = isVR,
+            LaunchArguments = key,
         };
 
         gamesMap[key] = detected;
+    }
+
+    /// <summary>
+    /// Resolves the installed Rockstar Games launcher executable path,
+    /// checking registry, standard installation locations, and explorer.exe fallback.
+    /// </summary>
+    public static string GetRockstarLauncherPath()
+    {
+        var regKeys = new[]
+        {
+            @"SOFTWARE\WOW6432Node\Rockstar Games\Launcher",
+            @"SOFTWARE\Rockstar Games\Launcher",
+            @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Rockstar Games Launcher",
+            @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Rockstar Games Launcher",
+        };
+
+        foreach (var subKey in regKeys)
+        {
+            try
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(subKey) ?? Registry.CurrentUser.OpenSubKey(subKey);
+                if (key != null)
+                {
+                    var installFolder = (key.GetValue("InstallFolder") as string)
+                                     ?? (key.GetValue("InstallLocation") as string);
+
+                    if (!string.IsNullOrWhiteSpace(installFolder))
+                    {
+                        var candidate = Path.Combine(installFolder, "Launcher.exe");
+                        if (File.Exists(candidate)) return candidate;
+                    }
+
+                    var displayIcon = key.GetValue("DisplayIcon") as string;
+                    if (!string.IsNullOrWhiteSpace(displayIcon))
+                    {
+                        var candidate = displayIcon.Split(',')[0].Trim('"', ' ');
+                        if (File.Exists(candidate)) return candidate;
+                    }
+                }
+            }
+            catch { }
+        }
+
+        var defaultPaths = new[]
+        {
+            @"C:\Program Files\Rockstar Games\Launcher\Launcher.exe",
+            @"C:\Program Files (x86)\Rockstar Games\Launcher\Launcher.exe",
+        };
+
+        foreach (var path in defaultPaths)
+        {
+            if (File.Exists(path)) return path;
+        }
+
+        var explorerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+        if (File.Exists(explorerPath)) return explorerPath;
+
+        return "explorer.exe";
     }
 
     /// <summary>

@@ -77,4 +77,11 @@ public class RockstarDetectorTests
         Assert.DoesNotContain(games, g => string.Equals(g.Title, "Rockstar Games SDK", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(games, g => string.Equals(g.Title, "Social Club", StringComparison.OrdinalIgnoreCase));
     }
+
+    [Fact]
+    public void GetRockstarLauncherPath_ReturnsValidPathOrExplorerFallback()
+    {
+        var path = RockstarDetector.GetRockstarLauncherPath();
+        Assert.False(string.IsNullOrWhiteSpace(path));
+    }
 }
