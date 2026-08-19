@@ -207,30 +207,21 @@ public class EpicGamesDetector : IGameDetector
                         if (IsExcludedTitle(title))
                             continue;
 
-                        string? appId = null;
-                        if (item.TryGetProperty("releaseInfo", out var rel) && rel.ValueKind == JsonValueKind.Array)
+                        string? storeSlug = null;
+                        if (item.TryGetProperty("customAttributes", out var attrs) && attrs.ValueKind == JsonValueKind.Object)
                         {
-                            foreach (var r in rel.EnumerateArray())
+                            if (attrs.TryGetProperty("com.epicgames.app.productSlug", out var attr))
                             {
-                                if (r.TryGetProperty("appId", out var a))
+                                var val = attr.TryGetProperty("value", out var v) ? v.GetString() : null;
+                                if (!string.IsNullOrEmpty(val))
                                 {
-                                    var aStr = a.GetString();
-                                    if (!string.IsNullOrWhiteSpace(aStr))
-                                    {
-                                        appId = aStr;
-                                        break;
-                                    }
+                                    storeSlug = val.Replace("/home", "").Split('/')[0];
                                 }
                             }
                         }
 
-                        if (string.IsNullOrWhiteSpace(appId))
-                        {
-                            appId = !string.IsNullOrWhiteSpace(ns) ? ns : id;
-                        }
-
-                        var launchUri = !string.IsNullOrWhiteSpace(appId)
-                            ? $"com.epicgames.launcher://apps/{appId}?action=install"
+                        var launchUri = !string.IsNullOrWhiteSpace(storeSlug)
+                            ? $"com.epicgames.launcher://store/p/{storeSlug}"
                             : "com.epicgames.launcher://store/library";
 
                         gamesMap[id] = new DetectedGame
