@@ -65,7 +65,7 @@ public class UninstalledImageProcessor
             {
                 await ProcessGameArtworkAsync(game, cacheDir, null, ct);
                 
-                if (game.Platform == "BattleNet" || game.Platform == "Battle.net" || game.Platform == "Epic" || game.Platform == "GOG" || game.Platform == "Gog")
+                if (game.Platform == "BattleNet" || game.Platform == "Battle.net" || game.Platform == "Epic" || game.Platform == "GOG" || game.Platform == "Gog" || game.Platform == "Ubisoft" || game.Platform == "Ubisoft Connect" || game.Platform == "Uplay")
                 {
                     bool generated = false;
                     string exePath = string.Empty;
@@ -109,6 +109,28 @@ public class UninstalledImageProcessor
                         var exeName = !string.IsNullOrWhiteSpace(gameId) ? gameId : Utilities.TitleSanitizer.Sanitize(game.Title);
                         var generator = new Steam.GogExecutableGenerator(_logger);
                         var exeDir = Path.Combine(cacheDir, "Executables", "GOG");
+                        exePath = Path.Combine(exeDir, $"{exeName}.exe");
+                        generated = generator.GenerateExecutable(gameId ?? exeName, exePath);
+                    }
+                    else if (game.Platform == "Ubisoft" || game.Platform == "Ubisoft Connect" || game.Platform == "Uplay")
+                    {
+                        var gameId = game.LaunchArguments;
+                        if (!string.IsNullOrWhiteSpace(gameId))
+                        {
+                            var match = System.Text.RegularExpressions.Regex.Match(gameId, @"uplay://(?:launch|install)/([a-zA-Z0-9_-]+)");
+                            if (match.Success)
+                            {
+                                gameId = match.Groups[1].Value;
+                            }
+                            else
+                            {
+                                gameId = gameId.Replace("uplay://launch/", "").Replace("uplay://install/", "").Trim('/').Split('/')[0];
+                            }
+                        }
+
+                        var exeName = !string.IsNullOrWhiteSpace(gameId) ? gameId : Utilities.TitleSanitizer.Sanitize(game.Title);
+                        var generator = new Steam.UbisoftExecutableGenerator(_logger);
+                        var exeDir = Path.Combine(cacheDir, "Executables", "Ubisoft");
                         exePath = Path.Combine(exeDir, $"{exeName}.exe");
                         generated = generator.GenerateExecutable(gameId ?? exeName, exePath);
                     }
