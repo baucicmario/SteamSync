@@ -112,16 +112,22 @@ flowchart TD
 
 ## Supported Storefronts & Integrations
 
-| Storefront / Source | Detection Method | Installed / Owned Tracking |
-| :--- | :--- | :--- |
-| **Epic Games** | Parses `.item` manifests in `%ProgramData%\Epic\EpicGamesLauncher\Data\Manifests\` | Installed |
-| **GOG Galaxy** | Queries SQLite database at `%ProgramData%\GOG.com\Galaxy\storage\galaxy-2.0.db` | Installed & Owned |
-| **Ubisoft Connect** | Reads Windows Registry (`HKLM\SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs`) | Installed |
-| **EA App** | Reads installer manifests in `%ProgramData%\Electronic Arts\EA Desktop\` | Installed |
-| **Battle.net** | Reads Battle.net product databases and Windows Registry | Installed |
-| **Rockstar Games** | Reads launcher manifests and registry entries | Installed |
-| **Xbox / Windows Store** | Scans UWP / MSIX application packages via Windows Gaming Services | Installed |
-| **Custom Scan Folders** | Recursive heuristic directory scanner with regex title cleaning & PE inspection | Installed |
+| Storefront / Source | Detection Method | Installed Detection | Owned Tracking |
+| :--- | :--- | :---: | :---: |
+| **Epic Games** | Parses `.item` manifests in `%ProgramData%\Epic\EpicGamesLauncher\` | 🟢 **Supported** | 🟢 **Supported** |
+| **GOG Galaxy** | Queries SQLite DB at `%ProgramData%\GOG.com\Galaxy\storage\galaxy-2.0.db` | 🟢 **Supported** | 🟢 **Supported** |
+| **Ubisoft Connect** | Reads Windows Registry & local launcher configuration | 🟢 **Supported** | 🟢 **Supported** |
+| **EA App** | Reads installer manifests in `%ProgramData%\Electronic Arts\EA Desktop\` | 🟢 **Supported** | 🟢 **Supported** |
+| **Battle.net** | Reads Battle.net product databases and agent state files | 🟢 **Supported** | 🟢 **Supported** |
+| **Rockstar Games** | Reads launcher manifests and local titles database | 🟢 **Supported** | 🟢 **Supported** |
+| **Xbox / Windows Store** | Scans UWP / MSIX application packages via Windows Gaming Services | 🟢 **Supported** | 🔴 **Unsupported** *(Installed only)* |
+| **Custom Scan Folders** | Recursive heuristic directory scanner with regex title cleaning & PE inspection | 🟢 **Supported** | ⚪ **N/A** *(File scan only)* |
+
+> [!NOTE]
+> - **Installed Detection:** Discovers games currently downloaded on local drives and automatically locates their target executables.
+> - **Owned Tracking:** Discovers uninstalled titles tied to your storefront accounts, enabling Steam shortcut injection with optional grayscale artwork and uninstalled badges.
+> - **Xbox Limitation:** Xbox / Windows Store integration operates locally on installed MSIX packages; uninstalled cloud/account entitlements require interactive Microsoft OAuth authentication and are not currently tracked.
+> - **Custom Folders:** Custom directories scan local file systems directly, where account ownership tracking is not applicable (N/A).
 
 ---
 
