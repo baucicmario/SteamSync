@@ -45,6 +45,13 @@ public class EaAppDetector : IGameDetector
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Electronic Arts", "EA Desktop", "CEF"),
     };
 
+    private readonly bool _includeUninstalled;
+
+    public EaAppDetector(bool includeUninstalled = true)
+    {
+        _includeUninstalled = includeUninstalled;
+    }
+
     public async Task<IReadOnlyList<DetectedGame>> DetectGamesAsync(CancellationToken cancellationToken = default)
     {
         var gamesMap = new Dictionary<string, DetectedGame>(StringComparer.OrdinalIgnoreCase);
@@ -58,13 +65,22 @@ public class EaAppDetector : IGameDetector
         // 3. Scan installerdata.xml across EA install directories & configured library
         await ScanInstallerDataXmlAsync(gamesMap, cancellationToken);
 
-        // 4. Scan EA license (.dlf) files
-        ScanLicenseFiles(gamesMap, cancellationToken);
+        if (_includeUninstalled)
+        {
+            // 4. Scan EA license (.dlf) files
+            ScanLicenseFiles(gamesMap, cancellationToken);
 
-        // 5. Scan local EA Desktop logs and CEF cache for owned offline games
-        await ScanLocalLogsAndCefCacheAsync(gamesMap, cancellationToken);
+            // 5. Scan local EA Desktop logs and CEF cache for owned offline games
+            await ScanLocalLogsAndCefCacheAsync(gamesMap, cancellationToken);
+        }
 
-        return gamesMap.Values.Distinct().ToList();
+        var result = gamesMap.Values.Distinct();
+        if (!_includeUninstalled)
+        {
+            result = result.Where(g => g.IsInstalled);
+        }
+
+        return result.ToList();
     }
 
     private void ScanRegistry(Dictionary<string, DetectedGame> gamesMap, CancellationToken cancellationToken)

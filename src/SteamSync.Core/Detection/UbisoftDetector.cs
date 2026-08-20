@@ -24,6 +24,13 @@ public class UbisoftDetector : IGameDetector
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Ubisoft", "Ubisoft Game Launcher", "cache", "configuration", "configurations"),
     };
 
+    private readonly bool _includeUninstalled;
+
+    public UbisoftDetector(bool includeUninstalled = true)
+    {
+        _includeUninstalled = includeUninstalled;
+    }
+
     public async Task<IReadOnlyList<DetectedGame>> DetectGamesAsync(CancellationToken cancellationToken = default)
     {
         var gamesMap = new Dictionary<string, DetectedGame>(StringComparer.OrdinalIgnoreCase);
@@ -32,7 +39,10 @@ public class UbisoftDetector : IGameDetector
         ScanRegistry(gamesMap, cancellationToken);
 
         // 2. Scan offline Ubisoft configurations cache for all owned games
-        await ScanConfigurationCacheAsync(gamesMap, cancellationToken);
+        if (_includeUninstalled)
+        {
+            await ScanConfigurationCacheAsync(gamesMap, cancellationToken);
+        }
 
         return gamesMap.Values.Distinct().ToList();
     }

@@ -297,6 +297,13 @@ public class BattleNetDetector : IGameDetector
     private static readonly string LocalCacheDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Battle.net", "Cache");
 
+    private readonly bool _includeUninstalled;
+
+    public BattleNetDetector(bool includeUninstalled = true)
+    {
+        _includeUninstalled = includeUninstalled;
+    }
+
     public async Task<IReadOnlyList<DetectedGame>> DetectGamesAsync(CancellationToken cancellationToken = default)
     {
         var gamesMap = new Dictionary<string, DetectedGame>(StringComparer.OrdinalIgnoreCase);
@@ -310,10 +317,19 @@ public class BattleNetDetector : IGameDetector
         // 3. Scan Battle.net configuration files (Battle.net.config & *.config)
         await ScanConfigFilesAsync(gamesMap, cancellationToken);
 
-        // 4. Scan SQLite CachedData.db & Cache fragments for owned licenses
-        await ScanUserLicensesAndCacheFragmentsAsync(gamesMap, cancellationToken);
+        if (_includeUninstalled)
+        {
+            // 4. Scan SQLite CachedData.db & Cache fragments for owned licenses
+            await ScanUserLicensesAndCacheFragmentsAsync(gamesMap, cancellationToken);
+        }
 
-        return gamesMap.Values.Distinct().ToList();
+        var result = gamesMap.Values.Distinct();
+        if (!_includeUninstalled)
+        {
+            result = result.Where(g => g.IsInstalled);
+        }
+
+        return result.ToList();
     }
 
     private void ScanRegistry(Dictionary<string, DetectedGame> gamesMap, CancellationToken cancellationToken)

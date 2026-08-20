@@ -44,6 +44,13 @@ public class EpicGamesDetector : IGameDetector
         @"\b(Expansion Pack|DLC|Addon|Add-on|Outfit|Skin Pack)\b"
     };
 
+    private readonly bool _includeUninstalled;
+
+    public EpicGamesDetector(bool includeUninstalled = true)
+    {
+        _includeUninstalled = includeUninstalled;
+    }
+
     public async Task<IReadOnlyList<DetectedGame>> DetectGamesAsync(CancellationToken cancellationToken = default)
     {
         var gamesMap = new Dictionary<string, DetectedGame>(StringComparer.OrdinalIgnoreCase);
@@ -127,7 +134,7 @@ public class EpicGamesDetector : IGameDetector
         }
 
         // 2. Scan catalog cache for all owned games
-        if (File.Exists(CatalogCachePath))
+        if (_includeUninstalled && File.Exists(CatalogCachePath))
         {
             try
             {

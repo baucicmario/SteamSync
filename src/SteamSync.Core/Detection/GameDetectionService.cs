@@ -13,6 +13,9 @@ public class GameDetectionService
     private readonly List<IGameDetector> _detectors = new();
     private readonly SyncLogger _logger;
 
+    /// <summary>Whether to include uninstalled games in detection results.</summary>
+    public bool IncludeUninstalledGames { get; set; } = true;
+
     public GameDetectionService(SyncLogger? logger = null)
     {
         _logger = logger ?? new SyncLogger();
@@ -32,25 +35,26 @@ public class GameDetectionService
     public void ConfigureDefaults(AppSettings settings)
     {
         _detectors.Clear();
-        _logger.Log("Debug", $"ConfigureDefaults called. DetectGog is: {settings.DetectGog}");
+        IncludeUninstalledGames = settings.IncludeUninstalledGames;
+        _logger.Log("Debug", $"ConfigureDefaults called. DetectGog is: {settings.DetectGog}, IncludeUninstalled: {IncludeUninstalledGames}");
 
         if (settings.DetectEpic)
-            _detectors.Add(new EpicGamesDetector());
+            _detectors.Add(new EpicGamesDetector(settings.IncludeUninstalledGames));
 
         if (settings.DetectGog)
-            _detectors.Add(new GogDetector());
+            _detectors.Add(new GogDetector(settings.IncludeUninstalledGames));
 
         if (settings.DetectUbisoft)
-            _detectors.Add(new UbisoftDetector());
+            _detectors.Add(new UbisoftDetector(settings.IncludeUninstalledGames));
 
         if (settings.DetectEa)
-            _detectors.Add(new EaAppDetector());
+            _detectors.Add(new EaAppDetector(settings.IncludeUninstalledGames));
 
         if (settings.DetectBattleNet)
-            _detectors.Add(new BattleNetDetector());
+            _detectors.Add(new BattleNetDetector(settings.IncludeUninstalledGames));
 
         if (settings.DetectRockstar)
-            _detectors.Add(new RockstarDetector());
+            _detectors.Add(new RockstarDetector(settings.IncludeUninstalledGames));
 
         if (settings.DetectXbox)
             _detectors.Add(new XboxDetector());
@@ -78,6 +82,7 @@ public class GameDetectionService
     public void ConfigurePlaynite(AppSettings settings)
     {
         _detectors.Clear();
+        IncludeUninstalledGames = settings.IncludeUninstalledGames;
 
         _detectors.Add(new PlayniteWorkerClient(
             settings.PlayniteWorkerPath, "all", settings.PlayniteWorkerTimeoutSeconds, _logger));
@@ -131,6 +136,11 @@ public class GameDetectionService
                     throw new Exception($"Cloud Detection Failed: {ex.Message}", ex);
                 }
             }
+        }
+
+        if (!IncludeUninstalledGames)
+        {
+            allGames = allGames.Where(g => g.IsInstalled).ToList();
         }
 
         // Deduplicate by title (case-insensitive)

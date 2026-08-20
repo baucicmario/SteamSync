@@ -19,6 +19,9 @@ public partial class SettingsViewModel : ViewModelBase
     private string _steamGridDbApiKey = string.Empty;
 
     [ObservableProperty]
+    private bool _includeUninstalledGames = true;
+
+    [ObservableProperty]
     private bool _detectEpic = true;
 
     [ObservableProperty]
@@ -66,6 +69,7 @@ public partial class SettingsViewModel : ViewModelBase
                 if (settings != null)
                 {
                     SteamGridDbApiKey = settings.SteamGridDbApiKey;
+                    IncludeUninstalledGames = settings.IncludeUninstalledGames;
                     DetectEpic = settings.DetectEpic;
                     DetectGog = settings.DetectGog;
                     DetectUbisoft = settings.DetectUbisoft;
@@ -91,6 +95,7 @@ public partial class SettingsViewModel : ViewModelBase
             var settings = new AppSettings
             {
                 SteamGridDbApiKey = SteamGridDbApiKey,
+                IncludeUninstalledGames = IncludeUninstalledGames,
                 DetectEpic = DetectEpic,
                 DetectGog = DetectGog,
                 DetectUbisoft = DetectUbisoft,

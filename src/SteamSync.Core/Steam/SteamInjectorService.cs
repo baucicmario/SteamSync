@@ -14,7 +14,9 @@ namespace SteamSync.Core.Steam;
 /// </summary>
 public class SteamInjectorService
 {
-    private const string SteamSyncTag = "SteamSync";
+    public const string SteamSyncTag = "SteamSync";
+    public const string InstalledTag = "Installed";
+    public const string UninstalledTag = "Uninstalled";
     private readonly SyncLogger _logger;
 
     public SteamInjectorService(SyncLogger? logger = null)
@@ -136,13 +138,21 @@ public class SteamInjectorService
 
             // Build new managed shortcuts from detected games
             var newManagedShortcuts = new List<SteamShortcut>();
-            foreach (var game in games.Where(g => g.IsInstalled && !string.IsNullOrWhiteSpace(g.ExePath)))
+            foreach (var game in games.Where(g => !string.IsNullOrWhiteSpace(g.ExePath)))
             {
                 var exe = game.ExePath!;
                 var appId = AppIdGenerator.GenerateShortcutAppId(exe, game.Title);
 
                 // Check if this game already exists in managed shortcuts
                 var existing = managedShortcuts.FirstOrDefault(s => s.AppId == appId);
+
+                var tags = new List<string> { SteamSyncTag };
+                tags.Add(game.IsInstalled ? InstalledTag : UninstalledTag);
+
+                if (game.IsVR)
+                {
+                    tags.Add("VR");
+                }
 
                 var shortcut = new SteamShortcut
                 {
@@ -156,16 +166,11 @@ public class SteamInjectorService
                     AllowOverlay = true,
                     OpenVr = game.IsVR ? 1u : 0u, // Toggle "Include in VR library"
                     LastPlayTime = existing?.LastPlayTime ?? 0, // Preserve play time
-                    Tags = new List<string> { SteamSyncTag },
+                    Tags = tags,
                 };
 
-                if (game.IsVR)
-                {
-                    shortcut.Tags.Add("VR");
-                }
-
                 newManagedShortcuts.Add(shortcut);
-                _logger.Log("Sync", $"  → {game.Title} (AppID: {appId}, IsVR: {game.IsVR}, exe: {exe})");
+                _logger.Log("Sync", $"  → {game.Title} (AppID: {appId}, Installed: {game.IsInstalled}, IsVR: {game.IsVR}, exe: {exe})");
             }
 
             // Merge: user shortcuts first, then managed shortcuts

@@ -99,7 +99,7 @@ public class UninstalledImageProcessor
                         game.ExePath = launcherPath;
                         game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
                         game.LaunchArguments = $"--game={gameUid}";
-                        game.IsInstalled = true; // Required by the injector
+                        game.IsInstalled = false;
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
                         game.SteamAppId = newAppId;
@@ -155,7 +155,7 @@ public class UninstalledImageProcessor
                         game.LaunchArguments = File.Exists(cmdPath)
                             ? $"/c start \"\" \"{url}\""
                             : $"\"{url}\"";
-                        game.IsInstalled = true; // Required by the injector
+                        game.IsInstalled = false;
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
                         game.SteamAppId = newAppId;
@@ -200,7 +200,7 @@ public class UninstalledImageProcessor
                         game.LaunchArguments = File.Exists(cmdPath)
                             ? $"/c start \"\" \"{launcherPath}\" /gameId={gameId} /command=installGame & ping 127.0.0.1 -n 2 >nul & start \"\" \"goggalaxy://openGameView/{gameId}\""
                             : $"/gameId={gameId} /command=installGame";
-                        game.IsInstalled = true; // Required by the injector
+                        game.IsInstalled = false;
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
                         game.SteamAppId = newAppId;
@@ -246,7 +246,7 @@ public class UninstalledImageProcessor
                         game.ExePath = launcherPath;
                         game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
                         game.LaunchArguments = $"\"uplay://install/{gameId}\"";
-                        game.IsInstalled = true; // Required by the injector
+                        game.IsInstalled = false;
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
                         game.SteamAppId = newAppId;
@@ -293,7 +293,7 @@ public class UninstalledImageProcessor
                         game.ExePath = launcherPath;
                         game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
                         game.LaunchArguments = $"\"origin2://game/launch/?offerIds={contentId}\"";
-                        game.IsInstalled = true; // Required by the injector
+                        game.IsInstalled = false;
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
                         game.SteamAppId = newAppId;
@@ -325,7 +325,7 @@ public class UninstalledImageProcessor
                         game.ExePath = launcherPath;
                         game.StartDir = Path.GetDirectoryName(launcherPath) ?? string.Empty;
                         game.LaunchArguments = string.Empty;
-                        game.IsInstalled = true; // Required by the injector
+                        game.IsInstalled = false;
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
                         game.SteamAppId = newAppId;
@@ -379,7 +379,7 @@ public class UninstalledImageProcessor
                         game.LaunchArguments = File.Exists(cmdPath)
                             ? $"/c start \"\" \"{url}\""
                             : $"\"{url}\"";
-                        game.IsInstalled = true; // Required by the injector
+                        game.IsInstalled = false;
 
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
                         game.SteamAppId = newAppId;
@@ -409,7 +409,7 @@ public class UninstalledImageProcessor
 
                         // Set up the dummy game properties for Steam injection
                         game.ExePath = exePath;
-                        game.IsInstalled = true; // Required by the injector
+                        game.IsInstalled = false;
                         
                         var newAppId = Steam.AppIdGenerator.GenerateShortcutAppId(game.ExePath, game.Title);
                         game.SteamAppId = newAppId;

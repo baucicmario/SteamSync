@@ -8,6 +8,9 @@ public class AppSettings
     /// <summary>SteamGridDB API key (Bearer token).</summary>
     public string SteamGridDbApiKey { get; set; } = string.Empty;
 
+    /// <summary>Whether to include uninstalled games with black and white artwork.</summary>
+    public bool IncludeUninstalledGames { get; set; } = true;
+
     /// <summary>Custom directories to scan for standalone/DRM-free games.</summary>
     public List<string> CustomScanDirectories { get; set; } = new();
 

@@ -70,6 +70,13 @@ public class RockstarDetector : IGameDetector
     private static readonly string DocumentsLauncherPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Rockstar Games", "Launcher");
 
+    private readonly bool _includeUninstalled;
+
+    public RockstarDetector(bool includeUninstalled = true)
+    {
+        _includeUninstalled = includeUninstalled;
+    }
+
     public async Task<IReadOnlyList<DetectedGame>> DetectGamesAsync(CancellationToken cancellationToken = default)
     {
         var gamesMap = new Dictionary<string, DetectedGame>(StringComparer.OrdinalIgnoreCase);
@@ -77,16 +84,25 @@ public class RockstarDetector : IGameDetector
         // 1. Scan Windows Registry for installed games
         ScanRegistry(gamesMap, cancellationToken);
 
-        // 2. Scan local build collection and manifest XMLs for owned games
-        ScanLocalManifests(gamesMap, cancellationToken);
+        if (_includeUninstalled)
+        {
+            // 2. Scan local build collection and manifest XMLs for owned games
+            ScanLocalManifests(gamesMap, cancellationToken);
 
-        // 3. Scan local launcher logs for owned / cached titles
-        await ScanLocalLogsAsync(gamesMap, cancellationToken);
+            // 3. Scan local launcher logs for owned / cached titles
+            await ScanLocalLogsAsync(gamesMap, cancellationToken);
 
-        // 4. Scan profile and titles cache files
-        ScanProfileAndCacheFiles(gamesMap, cancellationToken);
+            // 4. Scan profile and titles cache files
+            ScanProfileAndCacheFiles(gamesMap, cancellationToken);
+        }
 
-        return gamesMap.Values.Distinct().ToList();
+        var result = gamesMap.Values.Distinct();
+        if (!_includeUninstalled)
+        {
+            result = result.Where(g => g.IsInstalled);
+        }
+
+        return result.ToList();
     }
 
     private void ScanRegistry(Dictionary<string, DetectedGame> gamesMap, CancellationToken cancellationToken)

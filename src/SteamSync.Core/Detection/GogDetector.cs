@@ -19,6 +19,13 @@ public class GogDetector : IGameDetector
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
         @"GOG.com\Galaxy\storage\galaxy-2.0.db");
 
+    private readonly bool _includeUninstalled;
+
+    public GogDetector(bool includeUninstalled = true)
+    {
+        _includeUninstalled = includeUninstalled;
+    }
+
     public async Task<IReadOnlyList<DetectedGame>> DetectGamesAsync(CancellationToken cancellationToken = default)
     {
         var gamesMap = new Dictionary<string, DetectedGame>(StringComparer.OrdinalIgnoreCase);
@@ -76,7 +83,7 @@ public class GogDetector : IGameDetector
         }
 
         // 2. Scan GOG Galaxy SQLite Database for all owned games
-        if (File.Exists(GalaxyDbPath))
+        if (_includeUninstalled && File.Exists(GalaxyDbPath))
         {
             try
             {

@@ -57,6 +57,15 @@ public partial class GameListViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSortAscending = true;
 
+    [ObservableProperty]
+    private bool _includeUninstalledGames = true;
+
+    partial void OnIncludeUninstalledGamesChanged(bool value)
+    {
+        SaveIncludeUninstalledGamesSetting(value);
+        LoadGamesFromDb();
+    }
+
     public SyncLogger Logger { get; }
 
     public GameListViewModel()
@@ -71,6 +80,7 @@ public partial class GameListViewModel : ViewModelBase
         var client = new SteamGridDbClient("");
         _artworkManager = new ArtworkManager(client, _logger);
         _uninstalledImageProcessor = new UninstalledImageProcessor(client, _logger, _gameRepository);
+        _includeUninstalledGames = ReadSettings().IncludeUninstalledGames;
     }
 
     public GameListViewModel(
@@ -88,6 +98,7 @@ public partial class GameListViewModel : ViewModelBase
         _uninstalledImageProcessor = uninstalledImageProcessor;
         _logger = logger;
         Logger = logger;
+        _includeUninstalledGames = ReadSettings().IncludeUninstalledGames;
         LoadGamesFromDb();
     }
 
@@ -96,6 +107,11 @@ public partial class GameListViewModel : ViewModelBase
         try
         {
             var dbGames = _gameRepository.GetAll();
+            if (!IncludeUninstalledGames)
+            {
+                dbGames = dbGames.Where(g => g.IsInstalled).ToList();
+            }
+
             foreach (var g in dbGames)
                 g.IsSelected = true; // Default all to selected
 
@@ -146,6 +162,7 @@ public partial class GameListViewModel : ViewModelBase
         try
         {
             var settings = ReadSettings();
+            settings.IncludeUninstalledGames = IncludeUninstalledGames;
 
             if (mode == SteamSync.Core.Models.DetectionMode.Local)
                 _detectionService.ConfigureDefaults(settings);
@@ -163,6 +180,10 @@ public partial class GameListViewModel : ViewModelBase
             try
             {
                 detected = await _detectionService.DetectAllGamesAsync(progress);
+                if (!IncludeUninstalledGames)
+                {
+                    detected = detected.Where(g => g.IsInstalled).ToList();
+                }
             }
             catch (Exception ex) when (mode == SteamSync.Core.Models.DetectionMode.Cloud)
             {
@@ -356,12 +377,15 @@ public partial class GameListViewModel : ViewModelBase
                 }
             }
 
-            SyncProgress = 55;
-            StatusMessage = "Processing uninstalled games artwork...";
-            var uninstalledProgress = new Progress<string>(msg => StatusMessage = $"Uninstalled: {msg}");
-            var uninstalledPercentage = new Progress<double>(pct => SyncProgress = 55 + (pct / 100 * 5));
-            var dummyGames = await _uninstalledImageProcessor.ProcessUninstalledGamesAsync(uninstalledProgress, uninstalledPercentage);
-            selectedGames.AddRange(dummyGames);
+            if (IncludeUninstalledGames)
+            {
+                SyncProgress = 55;
+                StatusMessage = "Processing uninstalled games artwork...";
+                var uninstalledProgress = new Progress<string>(msg => StatusMessage = $"Uninstalled: {msg}");
+                var uninstalledPercentage = new Progress<double>(pct => SyncProgress = 55 + (pct / 100 * 5));
+                var dummyGames = await _uninstalledImageProcessor.ProcessUninstalledGamesAsync(uninstalledProgress, uninstalledPercentage);
+                selectedGames.AddRange(dummyGames);
+            }
 
             SyncProgress = 60;
             StatusMessage = forceRestart ? "Force syncing Steam shortcuts..." : "Syncing Steam shortcuts...";
@@ -537,6 +561,22 @@ public partial class GameListViewModel : ViewModelBase
         {
             StatusMessage = $"Error clearing database: {ex.Message}";
             _logger.LogError("UI", "Error clearing database", ex);
+        }
+    }
+
+    private void SaveIncludeUninstalledGamesSetting(bool value)
+    {
+        try
+        {
+            var settings = ReadSettings();
+            settings.IncludeUninstalledGames = value;
+            var path = AppSettings.GetSettingsFilePath();
+            var json = System.Text.Json.JsonSerializer.Serialize(settings, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            System.IO.File.WriteAllText(path, json);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("UI", "Failed to save IncludeUninstalledGames setting", ex);
         }
     }
 
