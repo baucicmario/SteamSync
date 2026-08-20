@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace SteamSync.Core.Models;
 
 /// <summary>
-/// Represents a game detected by any source (launcher, custom folder scanner, or Playnite worker).
+/// Represents a game detected by any source (launcher or custom folder scanner).
 /// Central data model used across all modules.
 /// Inherits from ObservableObject so UI bindings update in real time.
 /// </summary>

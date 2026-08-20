@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -10,8 +10,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamSync.UI", "src\SteamSync.UI\SteamSync.UI.csproj", "{96107DF8-E282-4012-AB94-BBA861258159}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamSync.Core.Tests", "tests\SteamSync.Core.Tests\SteamSync.Core.Tests.csproj", "{F428A10A-40B9-4809-8D93-D5FD20A6BEA1}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamSync.PlayniteAdapter", "src\SteamSync.PlayniteAdapter\SteamSync.PlayniteAdapter.csproj", "{7770058E-CBB8-4BA7-A716-E88A7BE5657D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,18 +57,6 @@ Global
 		{F428A10A-40B9-4809-8D93-D5FD20A6BEA1}.Release|x64.Build.0 = Release|Any CPU
 		{F428A10A-40B9-4809-8D93-D5FD20A6BEA1}.Release|x86.ActiveCfg = Release|Any CPU
 		{F428A10A-40B9-4809-8D93-D5FD20A6BEA1}.Release|x86.Build.0 = Release|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Debug|x64.Build.0 = Debug|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Debug|x86.Build.0 = Debug|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Release|x64.ActiveCfg = Release|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Release|x64.Build.0 = Release|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Release|x86.ActiveCfg = Release|Any CPU
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -79,6 +65,5 @@ Global
 		{028EAF72-1761-4EA4-90DC-557AD208918B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{96107DF8-E282-4012-AB94-BBA861258159} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{F428A10A-40B9-4809-8D93-D5FD20A6BEA1} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
-		{7770058E-CBB8-4BA7-A716-E88A7BE5657D} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

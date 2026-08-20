@@ -35,15 +35,6 @@ public class AppSettings
     /// <summary>Whether to auto-detect Xbox / Windows Store games (installed only).</summary>
     public bool DetectXbox { get; set; } = true;
 
-    /// <summary>Whether to use the Playnite worker for detection (fallback).</summary>
-    public bool UsePlayniteWorker { get; set; } = false;
-
-    /// <summary>Path to the PlayniteWorker executable.</summary>
-    public string PlayniteWorkerPath { get; set; } = "SteamSync.PlayniteWorker.exe";
-
-    /// <summary>Timeout in seconds for the Playnite worker process.</summary>
-    public int PlayniteWorkerTimeoutSeconds { get; set; } = 30;
-
     /// <summary>Steam installation directory (auto-detected if empty).</summary>
     public string? SteamInstallPath { get; set; }
 

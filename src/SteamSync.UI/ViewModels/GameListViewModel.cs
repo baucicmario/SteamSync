@@ -129,33 +129,13 @@ public partial class GameListViewModel : ViewModelBase
     [RelayCommand]
     private async Task DetectGamesAsync()
     {
-        // Show the detection mode dialog — no default, user must choose
-        var modeDialog = new SteamSync.UI.Views.DetectionModeDialog();
-        var parentWindow = Avalonia.Application.Current?.ApplicationLifetime is
-            Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
-            ? desktop.MainWindow : null;
-
-        if (parentWindow != null)
-            await modeDialog.ShowDialog(parentWindow);
-        else
-            modeDialog.Show();
-
-        var chosenMode = modeDialog.Result;
-        if (chosenMode == null)
-        {
-            _logger.Log("UI", "Detection cancelled by user.");
-            return;
-        }
-
-        await RunDetectionAsync(chosenMode.Value);
+        await RunDetectionAsync();
     }
 
-    private async Task RunDetectionAsync(SteamSync.Core.Models.DetectionMode mode)
+    private async Task RunDetectionAsync()
     {
         IsBusy = true;
-        StatusMessage = mode == SteamSync.Core.Models.DetectionMode.Local
-            ? "Detecting games (Local Offline)..."
-            : "Detecting games (Cloud / Playnite)...";
+        StatusMessage = "Detecting games...";
         SyncProgress = 0;
         Games.Clear();
 
@@ -164,10 +144,7 @@ public partial class GameListViewModel : ViewModelBase
             var settings = ReadSettings();
             settings.IncludeUninstalledGames = IncludeUninstalledGames;
 
-            if (mode == SteamSync.Core.Models.DetectionMode.Local)
-                _detectionService.ConfigureDefaults(settings);
-            else
-                _detectionService.ConfigurePlaynite(settings);
+            _detectionService.ConfigureDefaults(settings);
 
             var progress = new Progress<(string detector, int count)>(p =>
             {
@@ -176,34 +153,10 @@ public partial class GameListViewModel : ViewModelBase
                 IsSyncingPlatformVisible = true;
             });
 
-            List<DetectedGame> detected;
-            try
+            var detected = await _detectionService.DetectAllGamesAsync(progress);
+            if (!IncludeUninstalledGames)
             {
-                detected = await _detectionService.DetectAllGamesAsync(progress);
-                if (!IncludeUninstalledGames)
-                {
-                    detected = detected.Where(g => g.IsInstalled).ToList();
-                }
-            }
-            catch (Exception ex) when (mode == SteamSync.Core.Models.DetectionMode.Cloud)
-            {
-                // Cloud detection failed — show fallback dialog
-                _logger.LogError("UI", "Cloud detection failed", ex);
-                IsBusy = false;
-
-                var failureAction = await ShowCloudFailureDialogAsync(ex.Message);
-                switch (failureAction)
-                {
-                    case SteamSync.UI.Views.CloudFailureAction.Retry:
-                        await RunDetectionAsync(SteamSync.Core.Models.DetectionMode.Cloud);
-                        return;
-                    case SteamSync.UI.Views.CloudFailureAction.UseLocal:
-                        await RunDetectionAsync(SteamSync.Core.Models.DetectionMode.Local);
-                        return;
-                    default: // Cancel
-                        StatusMessage = "Detection cancelled.";
-                        return;
-                }
+                detected = detected.Where(g => g.IsInstalled).ToList();
             }
 
             SyncProgress = 40;
@@ -288,21 +241,6 @@ public partial class GameListViewModel : ViewModelBase
             SyncProgress = 0;
             IsSyncingPlatformVisible = false;
         }
-    }
-
-    private async Task<SteamSync.UI.Views.CloudFailureAction> ShowCloudFailureDialogAsync(string errorMessage)
-    {
-        var dialog = new SteamSync.UI.Views.CloudFailureDialog(errorMessage);
-        var parentWindow = Avalonia.Application.Current?.ApplicationLifetime is
-            Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
-            ? desktop.MainWindow : null;
-
-        if (parentWindow != null)
-            await dialog.ShowDialog(parentWindow);
-        else
-            dialog.Show();
-
-        return dialog.Result;
     }
 
     [RelayCommand]

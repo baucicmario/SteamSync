@@ -103,8 +103,7 @@ public partial class SettingsViewModel : ViewModelBase
                 DetectBattleNet = DetectBattleNet,
                 DetectRockstar = DetectRockstar,
                 DetectXbox = DetectXbox,
-                CustomScanDirectories = CustomScanDirectories.ToList(),
-                UsePlayniteWorker = false // Disabled per architecture change
+                CustomScanDirectories = CustomScanDirectories.ToList()
             };
 
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });

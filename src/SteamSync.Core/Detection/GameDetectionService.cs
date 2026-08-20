@@ -62,36 +62,7 @@ public class GameDetectionService
         if (settings.CustomScanDirectories.Count > 0)
             _detectors.Add(new CustomFolderScanner(settings.CustomScanDirectories, _logger));
 
-        if (settings.UsePlayniteWorker && !string.IsNullOrWhiteSpace(settings.PlayniteWorkerPath))
-        {
-            _detectors.Add(new PlayniteWorkerClient(
-                settings.PlayniteWorkerPath,
-                "all",
-                settings.PlayniteWorkerTimeoutSeconds,
-                _logger));
-        }
-
         _logger.Log("Detection", $"Configured {_detectors.Count} detector(s): {string.Join(", ", _detectors.Select(d => d.Name))}");
-    }
-
-    /// <summary>
-    /// Configures detectors for Cloud/Playnite mode.
-    /// Uses the out-of-process PlayniteWorker to authenticate and scrape platform APIs.
-    /// Custom folder scanner is still included if configured.
-    /// </summary>
-    public void ConfigurePlaynite(AppSettings settings)
-    {
-        _detectors.Clear();
-        IncludeUninstalledGames = settings.IncludeUninstalledGames;
-
-        _detectors.Add(new PlayniteWorkerClient(
-            settings.PlayniteWorkerPath, "all", settings.PlayniteWorkerTimeoutSeconds, _logger));
-
-        // Still add custom folder scanner since Playnite doesn't cover DRM-free folders
-        if (settings.CustomScanDirectories.Count > 0)
-            _detectors.Add(new CustomFolderScanner(settings.CustomScanDirectories, _logger));
-
-        _logger.Log("Detection", $"Configured Playnite Cloud mode with {_detectors.Count} detector(s): {string.Join(", ", _detectors.Select(d => d.Name))}");
     }
 
     /// <summary>
@@ -129,12 +100,6 @@ public class GameDetectionService
             {
                 _logger.LogError("Detection", $"{detector.Name} failed", ex);
                 progress?.Report((detector.Name, 0));
-                
-                // If the core Playnite Worker fails, bubble it up so the UI can show the Fallback Dialog
-                if (detector is PlayniteWorkerClient)
-                {
-                    throw new Exception($"Cloud Detection Failed: {ex.Message}", ex);
-                }
             }
         }
 
